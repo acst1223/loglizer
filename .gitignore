@@ -61,8 +61,10 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
-# csv logs
+# logs
 *.csv
+*.txt
+*.pkl
 
 # LSTM_VD HDFS files
 loglizer/loglizer/vd_workflow/HDFS/
