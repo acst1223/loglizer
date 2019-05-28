@@ -14,7 +14,7 @@ from scipy import stats
 flags = tf.app.flags
 flags.DEFINE_integer('epochs', 10, 'epochs to train')
 flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
-flags.DEFINE_integer('bat ch_size', 15, 'batch size')
+flags.DEFINE_integer('batch_size', 15, 'batch size')
 flags.DEFINE_integer('g', 7, 'the cutoff in the prediction output to be considered normal')
 flags.DEFINE_integer('h', 10, 'window size')
 flags.DEFINE_integer('L', 2, 'number of layers')
@@ -34,7 +34,7 @@ def padding_zero(a):
     amount = 0 if a.shape[0] % FLAGS.batch_size == 0 else FLAGS.batch_size - a.shape[0] % FLAGS.batch_size
     if amount == 0:
         return a
-    return np.concatenate((a, np.zeros(shape=(amount,) + a.shape[1:]))), amount
+    return np.concatenate((a, np.zeros(shape=(amount,) + a.shape[1:])))
 
 
 def compare(output, target):
@@ -55,9 +55,7 @@ def compare(output, target):
 def apply_model(x, y, mode='inference'):
     print('== Start %s ==' % mode)
     print('== Generate %s inputs ==' % mode)
-    for item in x:
-        if len(item) < FLAGS.plb:
-            lstm_preprocessor.pad(item, FLAGS.plb)
+    x = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x]
     inputs, _ = lstm_preprocessor.gen_input_and_label(x)
     inputs = padding_zero(inputs)
 
@@ -101,11 +99,6 @@ def apply_model(x, y, mode='inference'):
 
     precision /= tot_positives
     recall /= tot_anomalies
-    print('Total positives: %g' % tot_positives)
-    print('Total anomalies: %g' % tot_anomalies)
-    print('Precision: %g' % precision)
-    print('Recall: %g' % recall)
-    print('F-measure: %g' % (2 * precision * recall / (precision + recall)))
     config.log('Total positives: %g' % tot_positives)
     config.log('Total anomalies: %g' % tot_anomalies)
     config.log('Precision: %g' % precision)
@@ -131,6 +124,9 @@ if __name__ == '__main__':
     for i in range(len(y_train)):
         if y_train[i] == 0:
             x_train.append(x_temp[i])
+
+    # pad x_train
+    x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
     with tf.Session() as sess:
 

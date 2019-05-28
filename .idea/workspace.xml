@@ -2,68 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="abc7774f-681b-44a7-b132-42ce4f7eeead" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/loglizer/BGL_workflow/BGL_dropper.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/loglizer/BGL_workflow/BGL_processor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/loglizer/BGL_workflow/csv_extractor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/loglizer/BGL_workflow/data_generator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/loglizer/BGL_workflow/event_sequence_generator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/loglizer/vd_workflow/OpenStack_parser.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/loglizer/vd_workflow/decimal_integrator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/InvariantsMiner_BGL.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/LSTM_BGL.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/LSTM_VD_OpenStack.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/LogClustering_BGL.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/PCA_BGL.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test3.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/loglizer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/loglizer.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/markdown-navigator.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/dataloader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/models/LSTM.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/models/LSTM.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/models/LSTM_VD.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/models/LSTM_VD.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/preprocessing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_extracted.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test_E1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test_E10.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test_E21.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test_E25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test_E4.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_test_E8.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E1.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E10.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E10.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E21.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E21.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E25.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E4.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E4.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E8.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_train_E8.pkl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate_E1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate_E10.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate_E21.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate_E25.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate_E4.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/HDFS1e5_validate_E8.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/col_header.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS/label.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/vd_workflow/HDFS_parser.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/vd_workflow/classifier.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/csv_extractor.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/vd_workflow/csv_extractor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/mean_std_stater.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/vd_workflow/mean_std_stater.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/time_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/vd_workflow/time_transformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loglizer/vd_workflow/vd_dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/loglizer/vd_workflow/vd_dataloader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/LSTM_VD_HDFS.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test2.png" beforeDir="false" afterPath="$PROJECT_DIR$/test2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test2.py" beforeDir="false" afterPath="$PROJECT_DIR$/test2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/LSTM_HDFS.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/LSTM_HDFS.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -73,7 +15,7 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/loglizer$parse_HDFS.coverage" NAME="parse_HDFS Coverage Results" MODIFIED="1555492378401" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/loglizer$LSTM_BGL.coverage" NAME="LSTM_BGL Coverage Results" MODIFIED="1556671724645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/scripts" />
+    <SUITE FILE_PATH="coverage/loglizer$LSTM_BGL.coverage" NAME="LSTM_BGL Coverage Results" MODIFIED="1557719151710" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/scripts" />
     <SUITE FILE_PATH="coverage/loglizer$InvariantsMiner_OpenStack.coverage" NAME="InvariantsMiner_OpenStack Coverage Results" MODIFIED="1554893043566" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/scripts" />
     <SUITE FILE_PATH="coverage/loglizer$LSTM_demo.coverage" NAME="LSTM_demo Coverage Results" MODIFIED="1554294099429" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/demo" />
     <SUITE FILE_PATH="coverage/loglizer$shuffle.coverage" NAME="shuffle Coverage Results" MODIFIED="1555492012295" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -114,124 +56,107 @@
     <session id="-1028436621">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="38" />
-          <entry key="project.open.time.0" value="2" />
+          <entry key="project.closed" value="46" />
+          <entry key="project.open.time.0" value="5" />
           <entry key="project.open.time.1" value="1" />
           <entry key="project.open.time.10" value="1" />
-          <entry key="project.open.time.11" value="6" />
+          <entry key="project.open.time.11" value="7" />
           <entry key="project.open.time.12" value="3" />
           <entry key="project.open.time.13" value="1" />
           <entry key="project.open.time.18" value="5" />
           <entry key="project.open.time.19" value="2" />
+          <entry key="project.open.time.2" value="1" />
           <entry key="project.open.time.20" value="2" />
           <entry key="project.open.time.27" value="1" />
           <entry key="project.open.time.4" value="9" />
           <entry key="project.open.time.49" value="1" />
-          <entry key="project.open.time.5" value="2" />
-          <entry key="project.open.time.6" value="1" />
+          <entry key="project.open.time.5" value="4" />
+          <entry key="project.open.time.6" value="2" />
           <entry key="project.open.time.7" value="1" />
           <entry key="project.open.time.8" value="1" />
-          <entry key="project.opened" value="39" />
+          <entry key="project.opened" value="47" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="_bootstrap&gt;" value="1" />
           <entry key="csv" value="1" />
-          <entry key="md" value="1" />
+          <entry key="md" value="2" />
           <entry key="png" value="18" />
-          <entry key="py" value="201" />
+          <entry key="py" value="208" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Image" value="18" />
+          <entry key="Markdown" value="1" />
           <entry key="PLAIN_TEXT" value="2" />
           <entry key="PyRemoteDebug" value="1" />
-          <entry key="Python" value="201" />
+          <entry key="Python" value="208" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="Python Console" value="513" />
-          <entry key="py" value="38546" />
+          <entry key="md" value="59" />
+          <entry key="py" value="38643" />
           <entry key="txt" value="92" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
+          <entry key="Markdown" value="59" />
           <entry key="PLAIN_TEXT" value="92" />
-          <entry key="Python" value="39059" />
+          <entry key="Python" value="39156" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/OpenStack_parser.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="945">
-              <caret line="45" selection-start-line="45" selection-end-line="45" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/decimal_integrator.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="273">
-              <caret line="14" column="14" selection-start-line="14" selection-start-column="14" selection-end-line="14" selection-end-column="14" />
-              <folding>
-                <element signature="e#0#19#0" expanded="true" />
-                <marker date="1556627393581" expanded="true" signature="81:448" ph="..." />
-                <marker date="1556627393581" expanded="true" signature="551:552" ph="..." />
-                <marker date="1556627393581" expanded="true" signature="551:556" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/LSTM_VD_OpenStack.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="357">
-              <caret line="17" column="33" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/scripts/LSTM_BGL.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="231">
-              <caret line="15" column="41" selection-start-line="15" selection-start-column="41" selection-end-line="15" selection-end-column="41" />
+            <state relative-caret-position="462">
+              <caret line="50" selection-start-line="50" selection-end-line="55" selection-end-column="51" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/vd_dataloader.py">
+        <entry file="file://$PROJECT_DIR$/scripts/PCA_HDFS.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="21">
-              <caret line="13" selection-start-line="13" selection-end-line="13" />
-              <folding>
-                <element signature="e#0#19#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="336">
+              <caret line="16" column="68" selection-start-line="16" selection-start-column="68" selection-end-line="16" selection-end-column="68" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/mean_std_stater.py">
+        <entry file="file://$PROJECT_DIR$/scripts/LSTM_HDFS.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="357">
-              <caret line="17" column="34" selection-start-line="17" selection-start-column="34" selection-end-line="17" selection-end-column="34" />
+            <state relative-caret-position="2688">
+              <caret line="132" column="23" selection-start-line="132" selection-start-column="23" selection-end-line="132" selection-end-column="23" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/loglizer/models/LSTM.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="483">
+              <caret line="24" column="13" selection-start-line="24" selection-start-column="13" selection-end-line="24" selection-end-column="109" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/scripts/config.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="462">
+              <caret line="24" column="4" selection-start-line="24" selection-start-column="4" selection-end-line="24" selection-end-column="4" />
               <folding>
-                <element signature="e#10#29#0" expanded="true" />
+                <marker date="1556629052227" expanded="true" signature="1252:1257" ph="..." />
               </folding>
             </state>
           </provider>
@@ -267,15 +192,6 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/loglizer/preprocessing.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3255">
-              <caret line="165" column="8" selection-start-line="165" selection-start-column="8" selection-end-line="165" selection-end-column="8" />
-            </state>
-          </provider>
-        </entry>
-      </file>
     </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
@@ -298,7 +214,6 @@
       <find>float64</find>
       <find>test</find>
       <find>test_ratio</find>
-      <find>pad</find>
       <find>inference</find>
       <find>config.log</find>
       <find>pickle</find>
@@ -308,6 +223,7 @@
       <find>padding_zero</find>
       <find>st</find>
       <find>read_csv</find>
+      <find>pad</find>
     </findStrings>
     <replaceStrings>
       <replace>float32</replace>
@@ -351,7 +267,6 @@
         <option value="$PROJECT_DIR$/scripts/PCA_HDFS.py" />
         <option value="$PROJECT_DIR$/scripts/InvariantsMiner_BGL.py" />
         <option value="$PROJECT_DIR$/scripts/LogClustering_BGL.py" />
-        <option value="$PROJECT_DIR$/scripts/LSTM_HDFS.py" />
         <option value="$PROJECT_DIR$/loglizer/preprocessing.py" />
         <option value="$PROJECT_DIR$/loglizer/models/LSTM.py" />
         <option value="$PROJECT_DIR$/loglizer/vd_workflow/csv_extractor.py" />
@@ -366,6 +281,8 @@
         <option value="$PROJECT_DIR$/test3.py" />
         <option value="$PROJECT_DIR$/scripts/LSTM_VD_OpenStack.py" />
         <option value="$PROJECT_DIR$/scripts/LSTM_BGL.py" />
+        <option value="$PROJECT_DIR$/scripts/LSTM_HDFS.py" />
+        <option value="$PROJECT_DIR$/README.md" />
       </list>
     </option>
   </component>
@@ -393,28 +310,6 @@
             <path>
               <item name="loglizer" type="b2602c69:ProjectViewProjectNode" />
               <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="loglizer" type="b2602c69:ProjectViewProjectNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="loglizer" type="b2602c69:ProjectViewProjectNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-              <item name="BGL_workflow" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="loglizer" type="b2602c69:ProjectViewProjectNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-              <item name="vd_workflow" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="loglizer" type="b2602c69:ProjectViewProjectNode" />
-              <item name="loglizer" type="462c0819:PsiDirectoryNode" />
-              <item name="scripts" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -461,7 +356,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/LSTM_BGL.py" />
-      <option name="PARAMETERS" value="--train_dir LSTM_BGL --epochs 17 --epoch_base 3" />
+      <option name="PARAMETERS" value="--train_dir LSTM_BGL --epochs 0 --epoch_base 20" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -606,9 +501,8 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.282516" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.30810234" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -620,7 +514,7 @@
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.49946696" weight="0.32899022" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" weight="0.32899022" />
-      <window_info anchor="bottom" id="File Transfer" order="9" sideWeight="0.49307036" weight="0.32899022" />
+      <window_info anchor="bottom" id="File Transfer" order="9" sideWeight="0.49307036" visible="true" weight="0.32899022" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
       <window_info anchor="bottom" id="Terminal" order="11" weight="0.32790446" />
       <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.5117271" side_tool="true" weight="0.32899022" />
@@ -636,22 +530,22 @@
       <window_info anchor="right" id="Database" order="8" weight="0.32995737" />
     </layout>
     <layout-to-restore>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.27025586" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.30490404" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.48827294" visible="true" weight="0.32899022" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.48827294" weight="0.32899022" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49626866" weight="0.3984799" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.49946696" weight="0.32899022" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="8" />
-      <window_info anchor="bottom" id="File Transfer" order="9" sideWeight="0.49307036" weight="0.32899022" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32899022" />
+      <window_info active="true" anchor="bottom" id="File Transfer" order="9" sideWeight="0.49307036" visible="true" weight="0.32899022" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="11" weight="0.3286334" />
-      <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.5117271" side_tool="true" visible="true" weight="0.32899022" />
+      <window_info anchor="bottom" id="Terminal" order="11" weight="0.32790446" />
+      <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.5117271" side_tool="true" weight="0.32899022" />
       <window_info anchor="bottom" id="Python Console" order="13" sideWeight="0.49946696" weight="0.32899022" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -686,13 +580,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/scripts/PCA_OpenStack.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="17" selection-start-line="17" selection-end-line="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/LSTM_demo.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="105">
@@ -840,27 +727,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/InvariantsMiner_BGL.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="148">
-          <caret line="15" column="29" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/LSTM_HDFS.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="463">
-          <caret line="133" lean-forward="true" selection-start-line="133" selection-end-line="133" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/loglizer/models/LSTM.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="407">
-          <caret line="49" column="13" lean-forward="true" selection-start-line="49" selection-start-column="13" selection-end-line="49" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/scripts/PCA_BGL.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="168">
@@ -882,13 +748,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/PCA_HDFS.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="16" column="68" selection-start-line="16" selection-start-column="68" selection-end-line="16" selection-end-column="68" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/csv_extractor.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="473">
@@ -905,16 +764,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/LSTM_VD_HDFS.py" />
-    <entry file="file://$PROJECT_DIR$/scripts/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="505">
-          <caret line="42" lean-forward="true" selection-start-line="42" selection-end-line="42" />
-          <folding>
-            <marker date="1556629052227" expanded="true" signature="1252:1257" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/time_transformer.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="442">
@@ -926,9 +775,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="798">
           <caret line="38" column="8" selection-start-line="38" selection-start-column="8" selection-end-line="38" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -950,11 +796,67 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="273">
           <caret line="14" column="14" selection-start-line="14" selection-start-column="14" selection-end-line="14" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/vd_dataloader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="13" selection-start-line="13" selection-end-line="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/loglizer/preprocessing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="211">
+          <caret line="165" column="8" selection-start-line="165" selection-start-column="8" selection-end-line="165" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/LSTM_BGL.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1260">
+          <caret line="64" column="27" selection-start-line="64" selection-start-column="27" selection-end-line="64" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/mean_std_stater.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="441">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
           <folding>
-            <element signature="e#0#19#0" expanded="true" />
-            <marker date="1556627393581" expanded="true" signature="81:448" ph="..." />
-            <marker date="1556627393581" expanded="true" signature="551:552" ph="..." />
-            <marker date="1556627393581" expanded="true" signature="551:556" ph="..." />
+            <element signature="e#10#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/PCA_HDFS.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="336">
+          <caret line="16" column="68" selection-start-line="16" selection-start-column="68" selection-end-line="16" selection-end-column="68" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/LSTM_HDFS.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2688">
+          <caret line="132" column="23" selection-start-line="132" selection-start-column="23" selection-end-line="132" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/loglizer/models/LSTM.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="483">
+          <caret line="24" column="13" selection-start-line="24" selection-start-column="13" selection-end-line="24" selection-end-column="109" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="462">
+          <caret line="24" column="4" selection-start-line="24" selection-start-column="4" selection-end-line="24" selection-end-column="4" />
+          <folding>
+            <marker date="1556629052227" expanded="true" signature="1252:1257" ph="..." />
           </folding>
         </state>
       </provider>
@@ -983,47 +885,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/loglizer/preprocessing.py">
+    <entry file="file://$PROJECT_DIR$/scripts/InvariantsMiner_BGL.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3255">
-          <caret line="165" column="8" selection-start-line="165" selection-start-column="8" selection-end-line="165" selection-end-column="8" />
+        <state relative-caret-position="172">
+          <caret line="15" column="29" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="105">
+            <caret line="5" lean-forward="true" selection-start-line="5" selection-end-line="5" />
+          </first_editor>
+          <second_editor>
+            <markdownNavigatorState />
+          </second_editor>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/LSTM_VD_OpenStack.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="17" column="33" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/vd_dataloader.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="21">
-          <caret line="13" selection-start-line="13" selection-end-line="13" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/loglizer/vd_workflow/mean_std_stater.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="17" column="34" selection-start-line="17" selection-start-column="34" selection-end-line="17" selection-end-column="34" />
-          <folding>
-            <element signature="e#10#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/LSTM_BGL.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="231">
-          <caret line="15" column="41" selection-start-line="15" selection-start-column="41" selection-end-line="15" selection-end-column="41" />
+        <state relative-caret-position="462">
+          <caret line="50" selection-start-line="50" selection-end-line="55" selection-end-column="51" />
         </state>
       </provider>
     </entry>

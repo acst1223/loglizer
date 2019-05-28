@@ -75,3 +75,5 @@ loglizer/loglizer/vd_workflow/HDFS/
 
 # figures
 *.png
+
+!requirements.txt
