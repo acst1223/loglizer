@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="Anm2" autoUploadExternalChanges="true">
+  <component name="PublishConfigData" autoUpload="Always" serverName="Copy of project-level server 'server'" autoUploadExternalChanges="true">
     <serverData>
-      <paths name="Anm2">
+      <paths name="Copy of project-level server 'server'">
         <serverdata>
           <mappings>
-            <mapping deploy="/loglizer" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/znw17/znw_loglizer" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

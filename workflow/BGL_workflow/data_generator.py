@@ -26,7 +26,7 @@ def _split_data(x_data, y_data, train_ratio, test_ratio):
     return (x_train, y_train), (x_test, y_test), (x_validate, y_validate)
 
 
-def generate_data(event_sequence_file, train_ratio, test_ratio):
+def load_BGL(event_sequence_file, train_ratio, test_ratio):
     data_df = pd.read_csv(event_sequence_file)
     data_df['EventSequence'] = data_df['EventSequence'].map(literal_eval)
     return _split_data(data_df['EventSequence'].values, data_df['Label'].values, train_ratio, test_ratio)
