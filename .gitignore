@@ -78,4 +78,7 @@ loglizer/loglizer/vd_workflow/HDFS/
 # figures
 *.png
 
+# PyCharm
+.idea/
+
 !requirements.txt
