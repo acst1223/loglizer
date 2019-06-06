@@ -10,7 +10,7 @@ from loglizer import preprocessing
 from loglizer.models import LSTM
 from workflow.BGL_workflow.data_generator import load_BGL
 from workflow import dataloader
-import config
+from scripts import config
 
 import random
 
