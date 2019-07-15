@@ -10,7 +10,7 @@ else:
     print('Config: Docker mode')
     path = '/root/'
 
-HDFS_data = path + 'data/HDFS/data_instances.csv'
+HDFS_data = path + 'data/HDFS/data_instances_50k.csv'
 HDFS_vd_data = path + 'workflow/vd_workflow/HDFS/HDFS_1e6'
 HDFS_valid_template = path + 'workflow/vd_workflow/HDFS/valid_template.pkl'
 HDFS_result_png_prefix = path + 'workflow/vd_workflow/HDFS/result'

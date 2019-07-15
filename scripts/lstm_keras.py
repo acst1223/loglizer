@@ -1,13 +1,13 @@
 import numpy as np
-import pandas as pd
+import keras
 import tensorflow as tf
-from tensorflow.python import pywrap_tensorflow
+import os
 import sys
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
 from loglizer import preprocessing
-from loglizer.models import LSTM
+from loglizer.models import lstm_keras
 from workflow.BGL_workflow.data_generator import load_BGL
 from workflow import dataloader
 from scripts import config
@@ -16,7 +16,6 @@ import random
 
 flags = tf.app.flags
 flags.DEFINE_integer('epochs', 15, 'epochs to train')
-flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
 flags.DEFINE_integer('batch_size', 15, 'batch size')
 flags.DEFINE_integer('g', 5, 'the cutoff in the prediction output to be considered normal')
 flags.DEFINE_integer('h', 10, 'window size')
@@ -24,21 +23,31 @@ flags.DEFINE_integer('L', 2, 'number of layers')
 flags.DEFINE_integer('alpha', 64, 'number of memory units')
 flags.DEFINE_integer('plb', 12,
                      'padding lower bound, pad to this amount')  # this should be set to prevent length of block < window size, wipe those block with length < window size if this amount is set to 0
-flags.DEFINE_string('train_dir', 'lstm', 'training directory')
-flags.DEFINE_integer('inference_version', -1, 'version for inference')  # use latest if == -1
+flags.DEFINE_string('checkpoint_name', 'lstm_keras.h5', 'training directory')
 FLAGS = flags.FLAGS
 
 
-def padding_zero(a):
-    '''
-    pad zero to an array
-    :param a: numpy array, shape: (batch, h, sym_count)
-    :return: shape(batch', h, sym_count), batch' is the smallest number that could by divided by batch_size and >= batch
-    '''
-    amount = 0 if a.shape[0] % FLAGS.batch_size == 0 else FLAGS.batch_size - a.shape[0] % FLAGS.batch_size
-    if amount == 0:
-        return a
-    return np.concatenate((a, np.zeros(shape=(amount,) + a.shape[1:]))), amount
+def get_batch_count(a, batch_size):
+    return (len(a) - 1) // batch_size + 1
+
+
+def gen_batch(batch_size, i, l=None, shuffle=False):
+    while True:
+        if shuffle:
+            randnum = random.randint(0, 10000)
+            random.seed(randnum)
+            random.shuffle(i)
+            if l is not None:
+                random.seed(random)
+                random.shuffle(l)
+
+        c = get_batch_count(i, batch_size)
+        for k in range(0, c * batch_size, batch_size):
+            u = len(i) if k + batch_size > len(i) else k + batch_size
+            if l is not None:
+                yield i[k: u], l[k: u]
+            else:
+                yield i[k: u]
 
 
 def compare(output, target):
@@ -61,7 +70,6 @@ def apply_model(x, y, mode='inference'):
     print('== Generate %s inputs ==' % mode)
     x = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x]
     inputs, _ = lstm_preprocessor.gen_input_and_label(x)
-    inputs, _ = padding_zero(inputs)
 
     print('== Generate %s targets ==' % mode)
     target_lens = [len(t) - FLAGS.h for t in x]
@@ -72,11 +80,9 @@ def apply_model(x, y, mode='inference'):
         assert targets[i].shape[0] == target_lens[i]
 
     print('== Start applying model ==')
-    results = []
-    for k in range(int(np.shape(inputs)[0] / FLAGS.batch_size)):
-        results.append(model.inference(sess, inputs[k * FLAGS.batch_size: (k + 1) * FLAGS.batch_size]))
-
-    results = np.concatenate(tuple(results))
+    results = model.predict_generator(gen_batch(FLAGS.batch_size, inputs),
+                                      steps=get_batch_count(inputs, FLAGS.batch_size),
+                                      verbose=1)
 
     print('== Start calculating precision, recall and F-measure ==')
 
@@ -108,11 +114,16 @@ def apply_model(x, y, mode='inference'):
     print('Precision: %g' % precision)
     print('Recall: %g' % recall)
     print('F-measure: %g' % (2 * precision * recall / (precision + recall)))
-    config.log('Total positives: %g' % tot_positives)
-    config.log('Total anomalies: %g' % tot_anomalies)
-    config.log('Precision: %g' % precision)
-    config.log('Recall: %g' % recall)
-    config.log('F-measure: %g' % (2 * precision * recall / (precision + recall)))
+
+
+class ValCallback(keras.callbacks.Callback):
+    def __init__(self, x_val, y_val):
+        super().__init__()
+        self.x_val = x_val
+        self.y_val = y_val
+
+    def on_epoch_end(self, epoch, logs=None):
+        apply_model(self.x_val, self.y_val, 'validation')
 
 
 # datasets = ['BGL', 'HDFS']
@@ -123,8 +134,9 @@ if __name__ == '__main__':
     for dataset in datasets:
         print('########### Start LSTM on Dataset ' + dataset + ' ###########')
         config.init('LSTM_' + dataset)
-        train_dir = config.path + FLAGS.train_dir
+        checkpoint_name = config.path + FLAGS.checkpoint_name
 
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
         if dataset == 'BGL':
             data_instances = config.BGL_data
 
@@ -151,49 +163,22 @@ if __name__ == '__main__':
         # pad x_train
         x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
-        with tf.Session() as sess:
+        model = lstm_keras.LSTM(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count).model
+        checkpoint = keras.callbacks.ModelCheckpoint(checkpoint_name,
+                                                     verbose=1, save_weights_only=True)
+        val_callback = ValCallback(x_validate, y_validate)
 
-            model = LSTM.LSTM(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count)
+        if os.path.exists(checkpoint_name):
+            print('== Reading model parameters from %s ==' % checkpoint_name)
+            model.load_weights(checkpoint_name)
 
-            if tf.train.get_checkpoint_state(train_dir):
-                print('== Reading model parameters from %s ==' % train_dir)
-                model.saver.restore(sess, tf.train.latest_checkpoint(train_dir))
-            else:
-                print('== Generating new parameters ==')
-                tf.global_variables_initializer().run()
+        if FLAGS.epochs > 0:
+            print('== Start training ==')
 
-            if FLAGS.epochs > 0:
-                print('== Start training ==')
+            inputs, labels = lstm_preprocessor.gen_input_and_label(x_train)
+            avg_loss = 0
+            model.fit_generator(gen_batch(FLAGS.batch_size, inputs, labels, True),
+                                steps_per_epoch=get_batch_count(inputs, FLAGS.batch_size),
+                                epochs=FLAGS.epochs, verbose=1, callbacks=[checkpoint, val_callback])
 
-            for epoch_i in range(FLAGS.epochs):
-                epoch = FLAGS.epoch_base + epoch_i
-
-                config.log('== Epoch %d ==' % epoch)
-
-                # shuffle
-                randnum = random.randint(0, 10000)
-                random.seed(randnum)
-                random.shuffle(x_train)
-                random.seed(random)
-                random.shuffle(y_train)
-
-                inputs, labels = lstm_preprocessor.gen_input_and_label(x_train)
-                avg_loss = 0
-                for k in range(int(np.shape(inputs)[0] / FLAGS.batch_size)):
-                    loss, _ = model.train(sess,
-                                          inputs[k * FLAGS.batch_size: (k + 1) * FLAGS.batch_size],
-                                          labels[k * FLAGS.batch_size: (k + 1) * FLAGS.batch_size])
-                    avg_loss += loss
-
-                avg_loss /= int(np.shape(x_train)[0] / FLAGS.batch_size)
-                print('avg loss: %g' % avg_loss)
-                config.log('avg loss: %g' % avg_loss)
-
-                model.saver.save(sess, '%s/checkpoint' % train_dir, global_step=epoch)
-
-                apply_model(x_validate, y_validate, 'validating')
-
-            if FLAGS.inference_version != -1:
-                model.saver.restore(sess, train_dir + '/' + 'checkpoint-%08d' % FLAGS.inference_version)
-
-            apply_model(x_test, y_test, 'inference')
+        apply_model(x_test, y_test, 'inference')
