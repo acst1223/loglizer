@@ -3,6 +3,7 @@ import keras
 import tensorflow as tf
 import os
 import sys
+import random
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
@@ -11,19 +12,19 @@ from loglizer.models import lstm_keras
 from workflow.BGL_workflow.data_generator import load_BGL
 from workflow import dataloader
 from scripts import config
-
-import random
+from collector.collector import Collector
 
 flags = tf.app.flags
 flags.DEFINE_integer('epochs', 15, 'epochs to train')
 flags.DEFINE_integer('batch_size', 15, 'batch size')
-flags.DEFINE_integer('g', 5, 'the cutoff in the prediction output to be considered normal')
+flags.DEFINE_integer('g', 11, 'the cutoff in the prediction output to be considered normal')
 flags.DEFINE_integer('h', 10, 'window size')
 flags.DEFINE_integer('L', 2, 'number of layers')
 flags.DEFINE_integer('alpha', 64, 'number of memory units')
-flags.DEFINE_integer('plb', 12,
+flags.DEFINE_integer('plb', 10,
                      'padding lower bound, pad to this amount')  # this should be set to prevent length of block < window size, wipe those block with length < window size if this amount is set to 0
 flags.DEFINE_string('checkpoint_name', 'lstm_keras.h5', 'training directory')
+flags.DEFINE_string('result_folder', 'result', 'folder to save results')
 FLAGS = flags.FLAGS
 
 
@@ -65,9 +66,10 @@ def compare(output, target):
     return 0  # normal
 
 
-def apply_model(x, y, mode='inference'):
+def apply_model(x, y, mode='inference', collector=None):
     print('== Start %s ==' % mode)
     print('== Generate %s inputs ==' % mode)
+    x_before_pad = x
     x = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x]
     inputs, _ = lstm_preprocessor.gen_input_and_label(x)
 
@@ -98,14 +100,35 @@ def apply_model(x, y, mode='inference'):
         inference = compare(results[target_pos: target_pos + target_lens[i]],
                             targets[i])  # remember that results is an array, while targets is a list of arrays
         target_pos += target_lens[i]
+
         if inference == 1:
-            tot_positives += 1
             if y[i] == 1:
+                tot_positives += 1
+                tot_anomalies += 1
                 precision += 1
-        if y[i] == 1:
-            tot_anomalies += 1
-            if inference == 1:
                 recall += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'tp')
+            else:
+                tot_positives += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'fp')
+        else:
+            if y[i] == 1:
+                tot_anomalies += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'fn')
+            else:
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'tn')
+        # if inference == 1:
+        #     tot_positives += 1
+        #     if y[i] == 1:
+        #         precision += 1
+        # if y[i] == 1:
+        #     tot_anomalies += 1
+        #     if inference == 1:
+        #         recall += 1
 
     precision /= tot_positives
     recall /= tot_anomalies
@@ -114,6 +137,9 @@ def apply_model(x, y, mode='inference'):
     print('Precision: %g' % precision)
     print('Recall: %g' % recall)
     print('F-measure: %g' % (2 * precision * recall / (precision + recall)))
+
+    if collector:
+        collector.write_collections()
 
 
 class ValCallback(keras.callbacks.Callback):
@@ -137,6 +163,7 @@ if __name__ == '__main__':
         checkpoint_name = config.path + FLAGS.checkpoint_name
 
         (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
+        collector = None
         if dataset == 'BGL':
             data_instances = config.BGL_data
 
@@ -148,6 +175,8 @@ if __name__ == '__main__':
                                                                                                   train_ratio=0.3,
                                                                                                   is_data_instance=True,
                                                                                                   test_ratio=0.6)
+            result_folder = config.path + FLAGS.result_folder
+            collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
 
         lstm_preprocessor = preprocessing.LstmPreprocessor(x_train, x_test, x_validate)
         sym_count = len(lstm_preprocessor.vectors) - 1
@@ -181,4 +210,4 @@ if __name__ == '__main__':
                                 steps_per_epoch=get_batch_count(inputs, FLAGS.batch_size),
                                 epochs=FLAGS.epochs, verbose=1, callbacks=[checkpoint, val_callback])
 
-        apply_model(x_test, y_test, 'inference')
+        apply_model(x_test, y_test, 'inference', collector)
