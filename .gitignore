@@ -74,6 +74,7 @@ loglizer/loglizer/vd_workflow/HDFS/
 # checkpoint
 **/checkpoint
 **/checkpoint-*
+*.h5
 
 # figures
 *.png

@@ -11,7 +11,7 @@ class LSTM(object):
         self.lstm = self.input
         for _ in range(self.L - 1):
             self.lstm = layers.LSTM(self.alpha, return_sequences=True, dropout=0.5)(self.lstm)
-        self.lstm = layers.LSTM(self.alpha, dropout=0.5)(self.lstm)
+        self.lstm = layers.LSTM(self.alpha)(self.lstm)
         self.dense = layers.Dense(self.sym_count, activation='softmax')(self.lstm)
 
         self.model = keras.Model(inputs=[self.input], outputs=self.dense)

@@ -170,8 +170,8 @@ class LstmPreprocessor(object):
             for j in range(len(x[i]) - FLAGS.h):
                 inputs.append(list(map(self.v_map, x[i][j: j + FLAGS.h])))
                 labels.append(self.v_map(x[i][j + FLAGS.h]))
-        inputs = np.array(inputs, dtype=np.float64)
-        labels = np.array(labels)
+        inputs = np.array(inputs, dtype=np.float32)
+        labels = np.array(labels, dtype=np.float32)
         return inputs, labels
 
     def gen_ts_input_and_label(self, t):

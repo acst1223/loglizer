@@ -17,7 +17,7 @@ import random
 flags = tf.app.flags
 flags.DEFINE_integer('epochs', 15, 'epochs to train')
 flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
-flags.DEFINE_integer('batch_size', 15, 'batch size')
+flags.DEFINE_integer('batch_size', 128, 'batch size')
 flags.DEFINE_integer('g', 5, 'the cutoff in the prediction output to be considered normal')
 flags.DEFINE_integer('h', 10, 'window size')
 flags.DEFINE_integer('L', 2, 'number of layers')
@@ -101,7 +101,7 @@ def apply_model(x, y, mode='inference'):
             if inference == 1:
                 recall += 1
 
-    precision /= tot_positives
+    precision = 0
     recall /= tot_anomalies
     print('Total positives: %g' % tot_positives)
     print('Total anomalies: %g' % tot_anomalies)
