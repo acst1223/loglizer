@@ -3,6 +3,18 @@ from keras import layers
 import functools
 
 
+def attention_with_count_vector(inputs, count_vectors):
+    # inputs.shape = (batch_size, time_steps, input_dim)
+    # count_vectors.shape = (batch_size, sym_count)
+    time_steps = int(inputs.shape[1])
+    input_dim = int(inputs.shape[2])
+    a = layers.Dense(time_steps, activation='softmax')(count_vectors)
+    a = layers.RepeatVector(input_dim)(a)
+    a_probs = layers.Permute((2, 1), name='attention_vec')(a)
+    output_attention_mul = layers.multiply([inputs, a_probs], name='attention_mul')
+    return output_attention_mul
+
+
 def attention_3d_block(inputs):
     # inputs.shape = (batch_size, time_steps, input_dim)
     time_steps = int(inputs.shape[1])
@@ -20,20 +32,22 @@ class LSTMAttention(object):
         self.g, self.h, self.L, self.alpha, self.batch_size, self.sym_count, self.lr = g, h, L, alpha, batch_size, sym_count, lr
 
         self.input = keras.Input((self.h, self.sym_count))
-        # self.attention = attention_3d_block(self.input)
-        # self.lstm = self.attention
+        self.count_vectors = keras.Input((self.sym_count,))
         self.lstm = self.input
         for _ in range(self.L - 1):
             self.lstm = layers.LSTM(self.alpha, return_sequences=True, dropout=0.5)(self.lstm)
-        # self.lstm = layers.LSTM(self.alpha)(self.lstm)
         self.lstm = layers.LSTM(self.alpha, return_sequences=True)(self.lstm)
         self.lstm = layers.Reshape((h, alpha))(self.lstm)
+        # self.attention = attention_with_count_vector(self.lstm, self.count_vectors)
         self.attention = attention_3d_block(self.lstm)
         self.flatten = layers.Flatten()(self.attention)
-        # self.dense = layers.Dense(self.sym_count, activation='softmax')(self.lstm)
-        self.dense = layers.Dense(self.sym_count, activation='softmax')(self.flatten)
 
-        self.model = keras.Model(inputs=[self.input], outputs=self.dense)
+        self.dense_cv = layers.Dense(alpha, activation='relu')(self.count_vectors)
+        self.concat = layers.Concatenate()([self.flatten, self.dense_cv])
+        self.dense = layers.Dense(self.sym_count, activation='softmax')(self.concat)
+        # self.dense = layers.Dense(self.sym_count, activation='softmax')(self.flatten)
+
+        self.model = keras.Model(inputs=[self.input, self.count_vectors], outputs=self.dense)
         top_g_categorical_accuracy = functools.partial(keras.metrics.top_k_categorical_accuracy, k=self.g)
         top_g_categorical_accuracy.__name__ = 'top_g_categorical_accuracy'
         self.model.compile(loss=keras.losses.categorical_crossentropy,

@@ -174,16 +174,20 @@ class LstmPreprocessor(object):
         labels = np.array(labels, dtype=np.float32)
         return inputs, labels
 
-    def gen_ts_input_and_label(self, t):
-        inputs, labels = [], []
+    def gen_count_vectors(self, x):
+        count_vectors = []
+        sym_dict = {sym: i for i, sym in enumerate(self.syms)}
         FLAGS = tf.flags.FLAGS
-        for i in range(len(t)):
-            for j in range(len(t[i]) - FLAGS.h):
-                inputs.append(t[i][j: j + FLAGS.h])
-                labels.append(t[i][j + FLAGS.h])
-        inputs = (np.array(inputs, dtype=np.float64) - self.ts_mean) / self.ts_std
-        labels = (np.array(labels) - self.ts_mean) / self.ts_std
-        return inputs, labels
+        for i in range(len(x)):
+            for j in range(len(x[i]) - FLAGS.h):
+                series = x[i][j: j + FLAGS.h]
+                v = [0 for _ in self.syms]
+                for sym in series:
+                    if sym != '_PAD':
+                        v[sym_dict[sym]] += 1
+                count_vectors.append(v)
+        count_vectors = np.array(count_vectors, dtype=np.float32)
+        return count_vectors
 
 
 class CNNPreprocessor(object):
