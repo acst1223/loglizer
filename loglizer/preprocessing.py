@@ -132,7 +132,6 @@ class LstmPreprocessor(object):
         :param x_train:
         :param x_test:
         :param x_validate:
-        :param stat_path: path of statistic files, pickle formats
         '''
 
         tot_sym = []
@@ -156,9 +155,6 @@ class LstmPreprocessor(object):
 
     def pad(self, target, l):
         return ['_PAD'] * (l - len(target)) + target
-
-    def ts_pad(self, target, l):
-        return [0] * (l - len(target)) + target
 
     def v_map(self, sym):
         return self.vectors[sym]
@@ -188,6 +184,63 @@ class LstmPreprocessor(object):
                 count_vectors.append(v)
         count_vectors = np.array(count_vectors, dtype=np.float32)
         return count_vectors
+
+
+class VAEPreprocessor(object):
+
+    def __init__(self, x_train, x_test=None, x_validate=None):
+        tot_sym = []
+        for item in x_train:
+            tot_sym += item
+        if not x_test is None:
+            for item in x_test:
+                tot_sym += item
+        if not x_validate is None:
+            for item in x_validate:
+                tot_sym += item
+        self.syms = set(tot_sym)
+        self.syms = sorted(list(self.syms)) # Important!!
+
+        self.vectors = {}
+        for k, sym in enumerate(self.syms):
+            vector = [0 for x in range(len(self.syms))]
+            vector[k] = 1
+            self.vectors[sym] = vector
+        self.vectors['_PAD'] = [0 for x in range(len(self.syms))]
+
+    def pad(self, target, l):
+        return ['_PAD'] * (l - len(target)) + target
+
+    def v_map(self, sym):
+        return self.vectors[sym]
+
+    def gen_inputs(self, x):
+        inputs = []
+        FLAGS = tf.flags.FLAGS
+        for i in range(len(x)):
+            for j in range(len(x[i]) - FLAGS.h + 1):
+                inputs.append(list(map(self.v_map, x[i][j: j + FLAGS.h])))
+        inputs = np.array(inputs, dtype=np.float32)
+        return inputs
+
+    def gen_count_of_sequence(self, x):
+        '''
+        Note that each event sequence is not of the same length. When raw data become arrays
+        or tensors, we cannot tell how to split these arrays/tensors back into event sequences
+        without information about length of sequence.
+        However, note that when window size(h) is not 1 (under most situations it is much larger
+        than 1), the length of event sequence is not equal to length of the array generated from
+        that sequence. Therefore get count of sequence returns lengths of the array generated
+        from each event sequence (which == length of raw event sequence after padding - h + 1).
+
+        Args:
+            x: A list of event sequences after padding.
+
+        Returns:
+            A list, each element of the list is length of the array generated from
+                each event sequence.
+        '''
+        return [len(t) - tf.flags.FLAGS.h + 1 for t in x]
 
 
 class CNNPreprocessor(object):
