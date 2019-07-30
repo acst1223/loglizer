@@ -1,8 +1,11 @@
-import re
-import pandas as pd
-import pickle
+import keras
+from keras import layers
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 
-a = np.zeros((1000000, 10, 300))
+
+inputs = keras.Input((3, 3))
+outputs = layers.Lambda(lambda x: inputs[:, -1])(inputs)
+model = keras.Model(inputs=inputs, outputs=outputs)
+
+prediction = model.predict(np.arange(27).reshape((3, 3, 3)))
+print(prediction)

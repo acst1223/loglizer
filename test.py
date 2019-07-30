@@ -1,13 +1,6 @@
-import keras
-from keras import layers, losses
-import keras.backend as K
-import numpy as np
+from datetime import datetime
+import time
 
-
-inputs = keras.Input((2,))
-output = layers.Lambda(lambda x: K.mean(inputs, axis=1))(inputs)
-model = keras.Model(inputs=inputs, outputs=output)
-# model.compile(optimizer='adam', loss=losses.mean_squared_error)
-
-
-print(model.predict(np.array([[1, 2], [4, 5], [7, 8], [11, 12], [13, 14]])))
+ltime = time.localtime(1563808497)
+a = time.strftime('%Y-%m-%dT%H:%M:%S', ltime)
+print(a)

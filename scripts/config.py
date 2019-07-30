@@ -20,6 +20,7 @@ OpenStack_train_data = path + 'data/OpenStack/openstack_val_normal1_instances.cs
 OpenStack_test_data = path + 'data/OpenStack/openstack_val_with_performance_anomalies_instances.csv'
 OpenStack_valid_template = path + 'workflow/vd_workflow/OpenStack/valid_template.pkl'
 OpenStack_result_png_prefix = path + 'workflow/vd_workflow/OpenStack/result'
+BGL_col_header = path + 'data/BGL/log_templates.csv'
 BGL_data = path + 'data/BGL/event_sequence.csv'
 log_path = ''
 

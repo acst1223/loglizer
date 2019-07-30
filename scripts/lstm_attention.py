@@ -157,7 +157,7 @@ class ValCallback(keras.callbacks.Callback):
 
 
 # datasets = ['BGL', 'HDFS']
-datasets = ['HDFS']
+datasets = ['BGL']
 
 
 if __name__ == '__main__':
@@ -168,10 +168,12 @@ if __name__ == '__main__':
 
         (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
         collector = None
+        result_folder = config.path + FLAGS.result_folder
         if dataset == 'BGL':
             data_instances = config.BGL_data
 
             (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
+            collector = Collector(result_folder, (1, 1, 1, 1), False, config.BGL_col_header, 100)
 
         if dataset == 'HDFS':
             data_instances = config.HDFS_data
@@ -179,7 +181,6 @@ if __name__ == '__main__':
                                                                                                   train_ratio=0.35,
                                                                                                   is_data_instance=True,
                                                                                                   test_ratio=0.6)
-            result_folder = config.path + FLAGS.result_folder
             collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
 
         assert FLAGS.h < FLAGS.plb
