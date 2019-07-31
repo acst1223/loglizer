@@ -1,22 +1,11 @@
-"""
-The interface for data preprocessing.
-
-Authors:
-    LogPAI Team
-
-"""
-
 import pandas as pd
-import os
+import random
 import numpy as np
-import re
-import sys
 from collections import Counter
 from scipy.special import expit
-from itertools import compress
 import tensorflow as tf
-import pickle
-from ast import literal_eval
+import math
+
 
 class FeatureExtractor(object):
 
@@ -170,6 +159,16 @@ class LstmPreprocessor(object):
         labels = np.array(labels, dtype=np.float32)
         return inputs, labels
 
+    def gen_input_and_label_same_length(self, x):
+        inputs, labels = [], []
+        FLAGS = tf.flags.FLAGS
+        for i in range(len(x)):
+            inputs.append(list(map(self.v_map, x[i][: FLAGS.h])))
+            labels.append(self.v_map(x[i][FLAGS.h]))
+        inputs = np.array(inputs, dtype=np.float32)
+        labels = np.array(labels, dtype=np.float32)
+        return inputs, labels
+
     def gen_count_vectors(self, x):
         count_vectors = []
         sym_dict = {sym: i for i, sym in enumerate(self.syms)}
@@ -184,6 +183,66 @@ class LstmPreprocessor(object):
                 count_vectors.append(v)
         count_vectors = np.array(count_vectors, dtype=np.float32)
         return count_vectors
+
+    def gen_count_vectors_same_length(self, x):
+        count_vectors = []
+        sym_dict = {sym: i for i, sym in enumerate(self.syms)}
+        FLAGS = tf.flags.FLAGS
+        for i in range(len(x)):
+            series = x[i][: FLAGS.h]
+            v = [0 for _ in self.syms]
+            for sym in series:
+                if sym != '_PAD':
+                    v[sym_dict[sym]] += 1
+            count_vectors.append(v)
+        count_vectors = np.array(count_vectors, dtype=np.float32)
+        return count_vectors
+
+    @staticmethod
+    def process_train_inputs(x, y, h, throw_away_anomalies, no_repeat_series):
+        x_temp = x
+        x = []
+        x_hash = set()
+        for i in range(len(x_temp)):
+            if y is None or not throw_away_anomalies or y[i] == 0:
+                if no_repeat_series == 1:
+                    for j in range(len(x_temp[i]) - h):
+                        s = x_temp[i][j: j + h + 1]
+                        hs = hash(str(s))
+                        if hs not in x_hash:
+                            x_hash.add(hs)
+                            x.append(s)
+                else:
+                    hs = hash(str(x_temp[i]))
+                    if hs not in x_hash:
+                        x_hash.add(hs)
+                        x.append(x_temp[i])
+        return x
+
+    @staticmethod
+    def transform_to_same_length(x, h):
+        x_temp = x
+        x = []
+        for xi in x_temp:
+            for j in range(len(xi) - h):
+                x.append(xi[j: j + h + 1])
+        return x
+
+    @staticmethod
+    def get_batch_count(a, batch_size):
+        return math.ceil(len(a) / batch_size)
+
+    def gen_batch(self, batch_size, x, with_label, shuffle):
+        while True:
+            if shuffle:
+                random.shuffle(x)
+            c = self.get_batch_count(x, batch_size)
+            for k in range(0, c * batch_size, batch_size):
+                u = len(x) if k + batch_size > len(x) else k + batch_size
+                if with_label:
+                    yield self.gen_input_and_label_same_length(x[k: u])
+                else:
+                    yield self.gen_input_and_label_same_length(x[k: u])[0]
 
 
 class VAEPreprocessor(object):

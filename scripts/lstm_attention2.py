@@ -30,6 +30,29 @@ flags.DEFINE_integer('checkpoint_frequency', 10, 'every ? epochs to save checkpo
 FLAGS = flags.FLAGS
 
 
+def get_batch_count(a, batch_size):
+    return (len(a) - 1) // batch_size + 1
+
+
+def gen_batch(batch_size, i, l=None, shuffle=False):
+    while True:
+        if shuffle:
+            randnum = np.random.randint(0, 10000)
+            np.random.seed(randnum)
+            np.random.shuffle(i)
+            if l is not None:
+                np.random.seed(randnum)
+                np.random.shuffle(l)
+
+        c = get_batch_count(i, batch_size)
+        for k in range(0, c * batch_size, batch_size):
+            u = len(i) if k + batch_size > len(i) else k + batch_size
+            if l is not None:
+                yield i[k: u], l[k: u]
+            else:
+                yield i[k: u]
+
+
 def compare(output, target):
     mismatch = 0
     for i in range(len(target)):
@@ -55,14 +78,19 @@ def apply_model(x, y, model, mode='inference', collector=None):
     print('== Generate %s inputs ==' % mode)
     x_before_pad = x
     x = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x]
+    inputs, _ = lstm_preprocessor.gen_input_and_label(x)
 
+    print('== Generate %s targets ==' % mode)
     target_lens = [len(t) - FLAGS.h for t in x]
     target_lens = [t if t > 0 else 0 for t in target_lens]
-    x_same_length = lstm_preprocessor.transform_to_same_length(x, FLAGS.h)
+
+    targets = [np.array(list(map(lstm_preprocessor.v_map, t[FLAGS.h:])), dtype=np.float64) for t in x]
+    for i in range(len(targets)):
+        assert targets[i].shape[0] == target_lens[i]
 
     print('== Start applying model ==')
-    results = model.predict_generator(lstm_preprocessor.gen_batch(FLAGS.batch_size, x_same_length, False, False),
-                                      steps=lstm_preprocessor.get_batch_count(x_same_length, FLAGS.batch_size),
+    results = model.predict_generator(gen_batch(FLAGS.batch_size, inputs),
+                                      steps=get_batch_count(inputs, FLAGS.batch_size),
                                       verbose=1)
 
     print('== Start calculating precision, recall and F-measure ==')
@@ -70,10 +98,10 @@ def apply_model(x, y, model, mode='inference', collector=None):
     tp, tn, fp, fn = 0, 0, 0, 0
 
     target_pos = 0
-    for i in range(len(target_lens)):
-        target = np.array(list(map(lstm_preprocessor.v_map, x[i][FLAGS.h:])), dtype=np.float64)
+    for i in range(len(targets)):
+        inference = compare(results[target_pos: target_pos + target_lens[i]],
+                            targets[i])  # remember that results is an array, while targets is a list of arrays
 
-        inference = compare(results[target_pos: target_pos + target_lens[i]], target)
         target_pos += target_lens[i]
 
         if inference == 1:
@@ -165,9 +193,23 @@ if __name__ == '__main__':
         x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
         # throw away anomalies & same event series in x_train
-        x_train = lstm_preprocessor.process_train_inputs(x_train, y_train, FLAGS.h, True,
-                                                         FLAGS.no_repeat_series)
-        x_train = lstm_preprocessor.transform_to_same_length(x_train, FLAGS.h)
+        x_temp = x_train
+        x_train = []
+        x_hash = set()
+        for i in range(len(y_train)):
+            if y_train[i] == 0:
+                if FLAGS.no_repeat_series == 1:
+                    for j in range(len(x_temp[i]) - FLAGS.h):
+                        s = x_temp[i][j: j + FLAGS.h + 1]
+                        hs = hash(str(s))
+                        if hs not in x_hash:
+                            x_hash.add(hs)
+                            x_train.append(s)
+                else:
+                    hs = hash(str(x_temp[i]))
+                    if hs not in x_hash:
+                        x_hash.add(hs)
+                        x_train.append(x_temp[i])
 
         model = lstm_attention.LSTMAttention(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count).model
         # checkpoint = keras.callbacks.ModelCheckpoint(checkpoint_name,
@@ -180,8 +222,10 @@ if __name__ == '__main__':
 
         if FLAGS.epochs > 0:
             print('== Start training ==')
-            model.fit_generator(lstm_preprocessor.gen_batch(FLAGS.batch_size, x_train, True, True),
-                                steps_per_epoch=lstm_preprocessor.get_batch_count(x_train, FLAGS.batch_size),
+
+            inputs, labels = lstm_preprocessor.gen_input_and_label(x_train)
+            model.fit_generator(gen_batch(FLAGS.batch_size, inputs, labels, True),
+                                steps_per_epoch=get_batch_count(inputs, FLAGS.batch_size),
                                 epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
 
         model.load_weights(checkpoint_name)
