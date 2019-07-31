@@ -156,9 +156,7 @@ class ValCallback(keras.callbacks.Callback):
                 self.best_f1_score = f1_score
 
 
-# datasets = ['BGL', 'HDFS']
-datasets = ['BGL']
-
+datasets = ['BGL', 'HDFS']
 
 if __name__ == '__main__':
     for dataset in datasets:
