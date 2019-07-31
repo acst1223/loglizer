@@ -3,6 +3,7 @@ import keras
 import tensorflow as tf
 import os
 import sys
+from tqdm import tqdm
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
@@ -58,22 +59,25 @@ def apply_model(x, y, model, mode='inference', collector=None):
 
     target_lens = [len(t) - FLAGS.h for t in x]
     target_lens = [t if t > 0 else 0 for t in target_lens]
-    x_same_length = lstm_preprocessor.transform_to_same_length(x, FLAGS.h)
 
     print('== Start applying model ==')
-    results = model.predict_generator(lstm_preprocessor.gen_batch(FLAGS.batch_size, x_same_length, False, False),
-                                      steps=lstm_preprocessor.get_batch_count(x_same_length, FLAGS.batch_size),
-                                      verbose=1)
+    x_same_length = lstm_preprocessor.transform_to_same_length(x, FLAGS.h)
+    x_hash = lstm_preprocessor.gen_hash_dict(x_same_length)
+    x_input = lstm_preprocessor.gen_hash_dict_series()
+    predictions = model.predict_generator(lstm_preprocessor.gen_batch_fast(FLAGS.batch_size, x_input, False, False),
+                                          steps=lstm_preprocessor.get_batch_count(x_input, FLAGS.batch_size),
+                                          verbose=1)
+    lstm_preprocessor.gen_hash_predict_dict(x_input, predictions)
 
     print('== Start calculating precision, recall and F-measure ==')
 
     tp, tn, fp, fn = 0, 0, 0, 0
 
     target_pos = 0
-    for i in range(len(target_lens)):
+    for i in tqdm(range(len(target_lens))):
         target = np.array(list(map(lstm_preprocessor.v_map, x[i][FLAGS.h:])), dtype=np.float64)
-
-        inference = compare(results[target_pos: target_pos + target_lens[i]], target)
+        inference = compare(lstm_preprocessor.get_hash_predict_result(x_hash[target_pos: target_pos + target_lens[i]]),
+                            target)
         target_pos += target_lens[i]
 
         if inference == 1:
@@ -180,7 +184,7 @@ if __name__ == '__main__':
 
         if FLAGS.epochs > 0:
             print('== Start training ==')
-            model.fit_generator(lstm_preprocessor.gen_batch(FLAGS.batch_size, x_train, True, True),
+            model.fit_generator(lstm_preprocessor.gen_batch_fast(FLAGS.batch_size, x_train, True, True),
                                 steps_per_epoch=lstm_preprocessor.get_batch_count(x_train, FLAGS.batch_size),
                                 epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
 

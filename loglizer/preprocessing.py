@@ -142,6 +142,9 @@ class LstmPreprocessor(object):
             self.vectors[sym] = vector
         self.vectors['_PAD'] = [0 for x in range(len(self.syms))]
 
+        self.hash_dict = dict()
+        self.hash_predict_dict = dict()
+
     def pad(self, target, l):
         return ['_PAD'] * (l - len(target)) + target
 
@@ -243,6 +246,61 @@ class LstmPreprocessor(object):
                     yield self.gen_input_and_label_same_length(x[k: u])
                 else:
                     yield self.gen_input_and_label_same_length(x[k: u])[0]
+
+    def gen_batch_fast(self, batch_size, x, with_label, shuffle):
+        '''
+        Faster than gen_batch, but will take up more memory space.
+        '''
+        inputs, labels = self.gen_input_and_label_same_length(x)
+
+        while True:
+            if shuffle:
+                randnum = np.random.randint(0, 10000)
+                np.random.seed(randnum)
+                np.random.shuffle(inputs)
+                np.random.seed(randnum)
+                np.random.shuffle(labels)
+
+            c = self.get_batch_count(inputs, batch_size)
+            for k in range(0, c * batch_size, batch_size):
+                u = len(inputs) if k + batch_size > len(inputs) else k + batch_size
+                if with_label:
+                    yield inputs[k: u], labels[k: u]
+                else:
+                    yield inputs[k: u]
+
+    def gen_hash_dict(self, x):
+        '''
+        :param x: Series of templates of same length.
+        :return: A list of same length as x, each element of the list is the hash value of the corresponding element
+            in x.
+        '''
+        self.hash_dict = dict()
+        result = []
+        for xi in x:
+            hs = hash(str(xi))
+            if hs not in self.hash_dict:
+                self.hash_dict[hs] = xi
+            result.append(hs)
+        return result
+
+    def gen_hash_dict_series(self):
+        '''
+        :return: A list of all values in self.hash_dict.
+        '''
+        return [self.hash_dict[k] for k in self.hash_dict]
+
+    def gen_hash_predict_dict(self, x, predictions):
+        '''
+        x and predictions should be corresponding to each other.
+        '''
+        self.hash_predict_dict = dict()
+        for i, xi in enumerate(x):
+            hs = hash(str(xi))
+            self.hash_predict_dict[hs] = predictions[i]
+
+    def get_hash_predict_result(self, hash_list):
+        return np.vstack([self.hash_predict_dict[i] for i in hash_list])
 
 
 class VAEPreprocessor(object):
