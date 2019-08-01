@@ -235,23 +235,32 @@ class LstmPreprocessor(object):
     def get_batch_count(a, batch_size):
         return math.ceil(len(a) / batch_size)
 
-    def gen_batch(self, batch_size, x, with_label, shuffle):
+    def gen_batch(self, batch_size, x, with_label, shuffle, count_vector=False):
         while True:
             if shuffle:
                 random.shuffle(x)
             c = self.get_batch_count(x, batch_size)
             for k in range(0, c * batch_size, batch_size):
                 u = len(x) if k + batch_size > len(x) else k + batch_size
+                inputs, labels = self.gen_input_and_label_same_length(x[k: u])
+                count_vectors = self.gen_count_vectors_same_length(x[k: u]) if count_vector else None
                 if with_label:
-                    yield self.gen_input_and_label_same_length(x[k: u])
+                    if count_vector:
+                        yield [inputs, count_vectors], labels
+                    else:
+                        yield inputs, labels
                 else:
-                    yield self.gen_input_and_label_same_length(x[k: u])[0]
+                    if count_vector:
+                        yield [inputs, count_vectors]
+                    else:
+                        yield inputs
 
-    def gen_batch_fast(self, batch_size, x, with_label, shuffle):
+    def gen_batch_fast(self, batch_size, x, with_label, shuffle, count_vector=False):
         '''
         Faster than gen_batch, but will take up more memory space.
         '''
         inputs, labels = self.gen_input_and_label_same_length(x)
+        count_vectors = self.gen_count_vectors_same_length(x) if count_vector else None
 
         while True:
             if shuffle:
@@ -260,14 +269,23 @@ class LstmPreprocessor(object):
                 np.random.shuffle(inputs)
                 np.random.seed(randnum)
                 np.random.shuffle(labels)
+                if count_vector:
+                    np.random.seed(randnum)
+                    np.random.shuffle(count_vectors)
 
             c = self.get_batch_count(inputs, batch_size)
             for k in range(0, c * batch_size, batch_size):
                 u = len(inputs) if k + batch_size > len(inputs) else k + batch_size
                 if with_label:
-                    yield inputs[k: u], labels[k: u]
+                    if count_vector:
+                        yield [inputs[k: u], count_vectors[k: u]], labels[k: u]
+                    else:
+                        yield inputs[k: u], labels[k: u]
                 else:
-                    yield inputs[k: u]
+                    if count_vector:
+                        yield [inputs[k: u], count_vectors[k: u]]
+                    else:
+                        yield inputs[k: u]
 
     def gen_hash_dict(self, x):
         '''
