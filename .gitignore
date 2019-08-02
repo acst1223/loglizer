@@ -67,7 +67,7 @@ target/
 *.csv
 *.txt
 *.pkl
-data/
+data/*
 
 # checkpoint
 **/checkpoint
