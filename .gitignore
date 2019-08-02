@@ -80,6 +80,6 @@ target/
 .idea/
 
 # test files
-test*
+/test*
 
 !requirements.txt
