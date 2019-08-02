@@ -63,10 +63,11 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
-# logs
+# data
 *.csv
 *.txt
 *.pkl
+data/
 
 # checkpoint
 **/checkpoint
