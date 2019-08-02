@@ -3,6 +3,7 @@ import keras
 import tensorflow as tf
 import os
 import sys
+from tqdm import tqdm
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
@@ -30,31 +31,6 @@ flags.DEFINE_integer('checkpoint_frequency', 10, 'every ? epochs to save checkpo
 FLAGS = flags.FLAGS
 
 
-def get_batch_count(a, batch_size):
-    return (len(a) - 1) // batch_size + 1
-
-
-def gen_batch(batch_size, i, cv, l=None, shuffle=False):
-    while True:
-        if shuffle:
-            randnum = np.random.randint(0, 10000)
-            np.random.seed(randnum)
-            np.random.shuffle(i)
-            np.random.seed(randnum)
-            np.random.shuffle(cv)
-            if l is not None:
-                np.random.seed(randnum)
-                np.random.shuffle(l)
-
-        c = get_batch_count(i, batch_size)
-        for k in range(0, c * batch_size, batch_size):
-            u = len(i) if k + batch_size > len(i) else k + batch_size
-            if l is not None:
-                yield [i[k: u], cv[k: u]], l[k: u]
-            else:
-                yield [i[k: u], cv[k: u]]
-
-
 def compare(output, target):
     mismatch = 0
     for i in range(len(target)):
@@ -80,31 +56,29 @@ def apply_model(x, y, model, mode='inference', collector=None):
     print('== Generate %s inputs ==' % mode)
     x_before_pad = x
     x = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x]
-    inputs, _ = lstm_preprocessor.gen_input_and_label(x)
-    count_vectors = lstm_preprocessor.gen_count_vectors(x)
 
-    print('== Generate %s targets ==' % mode)
     target_lens = [len(t) - FLAGS.h for t in x]
     target_lens = [t if t > 0 else 0 for t in target_lens]
 
-    targets = [np.array(list(map(lstm_preprocessor.v_map, t[FLAGS.h:])), dtype=np.float64) for t in x]
-    for i in range(len(targets)):
-        assert targets[i].shape[0] == target_lens[i]
-
     print('== Start applying model ==')
-    results = model.predict_generator(gen_batch(FLAGS.batch_size, inputs, count_vectors),
-                                      steps=get_batch_count(inputs, FLAGS.batch_size),
-                                      verbose=1)
+    x_same_length = lstm_preprocessor.transform_to_same_length(x, FLAGS.h)
+    x_hash = lstm_preprocessor.gen_hash_dict(x_same_length)
+    x_input = lstm_preprocessor.gen_hash_dict_series()
+    predictions = model.predict_generator(lstm_preprocessor.gen_batch_fast(FLAGS.batch_size, x_input,
+                                                                           False, False, True),
+                                          steps=lstm_preprocessor.get_batch_count(x_input, FLAGS.batch_size),
+                                          verbose=1)
+    lstm_preprocessor.gen_hash_predict_dict(x_input, predictions)
 
     print('== Start calculating precision, recall and F-measure ==')
 
     tp, tn, fp, fn = 0, 0, 0, 0
 
     target_pos = 0
-    for i in range(len(targets)):
-        inference = compare(results[target_pos: target_pos + target_lens[i]],
-                            targets[i])  # remember that results is an array, while targets is a list of arrays
-
+    for i in tqdm(range(len(target_lens))):
+        target = np.array(list(map(lstm_preprocessor.v_map, x[i][FLAGS.h:])), dtype=np.float64)
+        inference = compare(lstm_preprocessor.get_hash_predict_result(x_hash[target_pos: target_pos + target_lens[i]]),
+                            target)
         target_pos += target_lens[i]
 
         if inference == 1:
@@ -160,7 +134,8 @@ class ValCallback(keras.callbacks.Callback):
 
 
 # datasets = ['BGL', 'HDFS']
-datasets = ['HDFS']
+datasets = ['BGL']
+
 
 if __name__ == '__main__':
     for dataset in datasets:
@@ -170,10 +145,12 @@ if __name__ == '__main__':
 
         (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
         collector = None
+        result_folder = config.path + FLAGS.result_folder
         if dataset == 'BGL':
             data_instances = config.BGL_data
 
             (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
+            collector = Collector(result_folder, (1, 1, 1, 1), False, config.BGL_col_header, 100)
 
         if dataset == 'HDFS':
             data_instances = config.HDFS_data
@@ -181,7 +158,6 @@ if __name__ == '__main__':
                                                                                                   train_ratio=0.35,
                                                                                                   is_data_instance=True,
                                                                                                   test_ratio=0.6)
-            result_folder = config.path + FLAGS.result_folder
             collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
 
         assert FLAGS.h < FLAGS.plb
@@ -190,26 +166,13 @@ if __name__ == '__main__':
         print('Total symbols: %d' % sym_count)
         print(lstm_preprocessor.syms)
 
-        # don't pad x_train
-        # x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
+        # pad x_train
+        x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
-        # throw away same event series in x_train
-        x_temp = x_train
-        x_train = []
-        x_hash = set()
-        for i in range(len(y_train)):
-            if FLAGS.no_repeat_series == 1:
-                for j in range(len(x_temp[i]) - FLAGS.h):
-                    s = x_temp[i][j: j + FLAGS.h + 1]
-                    hs = hash(str(s))
-                    if hs not in x_hash:
-                        x_hash.add(hs)
-                        x_train.append(s)
-            else:
-                hs = hash(str(x_temp[i]))
-                if hs not in x_hash:
-                    x_hash.add(hs)
-                    x_train.append(x_temp[i])
+        # throw away anomalies & same event series in x_train
+        x_train = lstm_preprocessor.process_train_inputs(x_train, y_train, FLAGS.h, False,
+                                                         FLAGS.no_repeat_series)
+        x_train = lstm_preprocessor.transform_to_same_length(x_train, FLAGS.h)
 
         model = lstm_attention_count_vector.LSTMAttention(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size,
                                                           sym_count).model
@@ -223,11 +186,8 @@ if __name__ == '__main__':
 
         if FLAGS.epochs > 0:
             print('== Start training ==')
-
-            inputs, labels = lstm_preprocessor.gen_input_and_label(x_train)
-            count_vectors = lstm_preprocessor.gen_count_vectors(x_train)
-            model.fit_generator(gen_batch(FLAGS.batch_size, inputs, count_vectors, labels, True),
-                                steps_per_epoch=get_batch_count(inputs, FLAGS.batch_size),
+            model.fit_generator(lstm_preprocessor.gen_batch_fast(FLAGS.batch_size, x_train, True, True, True),
+                                steps_per_epoch=lstm_preprocessor.get_batch_count(x_train, FLAGS.batch_size),
                                 epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
 
         model.load_weights(checkpoint_name)

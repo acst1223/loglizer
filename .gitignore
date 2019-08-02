@@ -68,9 +68,6 @@ target/
 *.txt
 *.pkl
 
-# LSTM_VD HDFS files
-loglizer/loglizer/vd_workflow/HDFS/
-
 # checkpoint
 **/checkpoint
 **/checkpoint-*
@@ -81,5 +78,8 @@ loglizer/loglizer/vd_workflow/HDFS/
 
 # PyCharm
 .idea/
+
+# test files
+test*
 
 !requirements.txt

@@ -3,7 +3,7 @@ import os
 import sys
 
 path = ''
-if os.path.exists('../scripts'):
+if os.path.exists('../vd'):
     print('Config: PyCharm mode')
     path = '../'
 else:
@@ -12,8 +12,11 @@ else:
 
 HDFS_data = path + 'data/HDFS/data_instances.csv'
 HDFS_col_header = path + 'data/HDFS/col_header.csv'
-BGL_col_header = path + 'data/BGL/BGL2.log_templates.csv'
-BGL_data = path + 'data/BGL/event_sequence2.csv'
+OpenStack_vd_data = path + 'data/OpenStack/openstack'
+OpenStack_train_data = path + 'data/OpenStack/openstack_val_normal1_instances.csv'
+OpenStack_test_data = path + 'data/OpenStack/openstack_val_with_performance_anomalies_instances.csv'
+OpenStack_valid_template = path + 'data/OpenStack/valid_template.pkl'
+OpenStack_result_png_prefix = path + 'data/OpenStack/result'
 log_path = ''
 
 
@@ -32,3 +35,7 @@ def log(str):
 
 def get_stat_path(data_path):
     return data_path[: -4] + '.stat.pkl'
+
+
+def get_OpenStack_result_png_name(template):
+    return OpenStack_result_png_prefix + '_' + template + '.png'

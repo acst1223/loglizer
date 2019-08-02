@@ -1,13 +1,10 @@
 import numpy as np
-import pandas as pd
 import tensorflow as tf
-from tensorflow.python import pywrap_tensorflow
 import sys
 sys.path.append('../')
 sys.path.append('/root/') # for docker
-from loglizer.vd_workflow import vd_dataloader, valid_template
-from loglizer.models import LSTM_VD
-from scripts import config
+from vd.workflow import vd_dataloader, valid_template
+from vd import config, LSTM_VD
 from scipy import stats
 import math
 import matplotlib.pyplot as plt
