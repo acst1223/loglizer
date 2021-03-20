@@ -153,7 +153,7 @@ class LstmPreprocessor(object):
 
     def gen_input_and_label(self, x):
         inputs, labels = [], []
-        FLAGS = tf.flags.FLAGS
+        FLAGS = tf.compat.v1.app.flags.FLAGS
         for i in range(len(x)):
             for j in range(len(x[i]) - FLAGS.h):
                 inputs.append(list(map(self.v_map, x[i][j: j + FLAGS.h])))
@@ -164,7 +164,7 @@ class LstmPreprocessor(object):
 
     def gen_input_and_label_same_length(self, x):
         inputs, labels = [], []
-        FLAGS = tf.flags.FLAGS
+        FLAGS = tf.compat.v1.app.flags.FLAGS
         for i in range(len(x)):
             inputs.append(list(map(self.v_map, x[i][: FLAGS.h])))
             labels.append(self.v_map(x[i][FLAGS.h]))
@@ -175,7 +175,7 @@ class LstmPreprocessor(object):
     def gen_count_vectors(self, x):
         count_vectors = []
         sym_dict = {sym: i for i, sym in enumerate(self.syms)}
-        FLAGS = tf.flags.FLAGS
+        FLAGS = tf.compat.v1.app.flags.FLAGS
         for i in range(len(x)):
             for j in range(len(x[i]) - FLAGS.h):
                 series = x[i][j: j + FLAGS.h]
@@ -190,7 +190,7 @@ class LstmPreprocessor(object):
     def gen_count_vectors_same_length(self, x):
         count_vectors = []
         sym_dict = {sym: i for i, sym in enumerate(self.syms)}
-        FLAGS = tf.flags.FLAGS
+        FLAGS = tf.compat.v1.app.flags.FLAGS
         for i in range(len(x)):
             series = x[i][: FLAGS.h]
             v = [0 for _ in self.syms]
@@ -351,7 +351,7 @@ class VAEPreprocessor(object):
 
     def gen_inputs(self, x):
         inputs = []
-        FLAGS = tf.flags.FLAGS
+        FLAGS = tf.compat.v1.app.flags.FLAGS
         for i in range(len(x)):
             for j in range(len(x[i]) - FLAGS.h + 1):
                 inputs.append(list(map(self.v_map, x[i][j: j + FLAGS.h])))
@@ -375,7 +375,7 @@ class VAEPreprocessor(object):
             A list, each element of the list is length of the array generated from
                 each event sequence.
         '''
-        return [len(t) - tf.flags.FLAGS.h + 1 for t in x]
+        return [len(t) - tf.compat.v1.app.flags.FLAGS.h + 1 for t in x]
 
 
 class CNNPreprocessor(object):

@@ -4,7 +4,7 @@ import sys
 
 path = ''
 if os.path.exists('../scripts'):
-    print('Config: PyCharm mode')
+    print('Config: Normal mode')
     path = '../'
 else:
     print('Config: Docker mode')

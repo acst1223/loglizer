@@ -3,9 +3,8 @@ import sys
 sys.path.append('../')
 sys.path.append('/path/')
 from loglizer.models import InvariantsMiner
-from loglizer import preprocessing
+from loglizer import preprocessing, dataloader
 from workflow.BGL_workflow.data_generator import load_BGL
-from workflow import dataloader
 import config
 
 datasets = ['BGL','HDFS', 'OpenStack']

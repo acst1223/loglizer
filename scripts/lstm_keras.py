@@ -6,14 +6,12 @@ import sys
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
-from loglizer import preprocessing
+from loglizer import preprocessing, dataloader, config
 from loglizer.models import lstm_keras
 from workflow.BGL_workflow.data_generator import load_BGL
-from workflow import dataloader
-from scripts import config
 from collector.collector import Collector
 
-flags = tf.app.flags
+flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 50, 'epochs to train')
 flags.DEFINE_integer('batch_size', 128, 'batch size')
 flags.DEFINE_integer('g', 5, 'the cutoff in the prediction output to be considered normal')

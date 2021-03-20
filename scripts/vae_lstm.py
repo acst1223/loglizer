@@ -7,14 +7,12 @@ import math
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
-from loglizer import preprocessing
+from loglizer import preprocessing, dataloader, config
 from loglizer.models.vae_lstm2 import VAELSTM
 from workflow.BGL_workflow.data_generator import load_BGL
-from workflow import dataloader
-from scripts import config
 from collector.collector import Collector
 
-flags = tf.app.flags
+flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 60, 'epochs to train')
 flags.DEFINE_integer('batch_size', 128, 'batch size')
 flags.DEFINE_integer('z_dim', 20, 'dimension of z')

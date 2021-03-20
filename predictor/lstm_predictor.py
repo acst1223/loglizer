@@ -12,7 +12,7 @@ import os
 
 import random
 
-flags = tf.app.flags
+flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 0, 'epochs to train')
 flags.DEFINE_integer('epoch_base', 66, 'base of epoch')
 flags.DEFINE_integer('batch_size', 15, 'batch size')
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     preprocessor = preprocessing.Preprocessor('../data/baidu/train', '../data/baidu/test', FLAGS.batch_size,
                                               FLAGS.h, FLAGS.template_count)
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         model = LSTM.LSTM(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, FLAGS.template_count)
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             preprocessor.load_process(FLAGS.preprocessor_process_file)
         else:
             print('== Generating new parameters ==')
-            tf.global_variables_initializer().run()
+            tf.compat.v1.global_variables_initializer().run()
 
         if FLAGS.epochs > 0:
             print('== Start training ==')

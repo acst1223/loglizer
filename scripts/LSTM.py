@@ -1,20 +1,16 @@
 import numpy as np
-import pandas as pd
 import tensorflow as tf
-from tensorflow.python import pywrap_tensorflow
 import sys
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
-from loglizer import preprocessing
+from loglizer import preprocessing, dataloader, config
 from loglizer.models import LSTM
 from workflow.BGL_workflow.data_generator import load_BGL
-from workflow import dataloader
-from scripts import config
 
 import random
 
-flags = tf.app.flags
+flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 15, 'epochs to train')
 flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
 flags.DEFINE_integer('batch_size', 128, 'batch size')
@@ -151,7 +147,7 @@ if __name__ == '__main__':
         # pad x_train
         x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
 
             model = LSTM.LSTM(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count)
 
@@ -160,7 +156,7 @@ if __name__ == '__main__':
                 model.saver.restore(sess, tf.train.latest_checkpoint(train_dir))
             else:
                 print('== Generating new parameters ==')
-                tf.global_variables_initializer().run()
+                tf.compat.v1.global_variables_initializer().run()
 
             if FLAGS.epochs > 0:
                 print('== Start training ==')

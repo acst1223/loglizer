@@ -1,18 +1,15 @@
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import sys
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
-from loglizer import preprocessing
+from loglizer import preprocessing, dataloader
 from loglizer.models import CNN
 import random
-from workflow.BGL_workflow.data_generator import load_BGL
-from workflow import dataloader
 import config
 
-flags = tf.app.flags
+flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 10, 'epochs to train')
 flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
 flags.DEFINE_integer('log_len', 50, 'default length of log')  # if length < log_len, it will be padded by 0
@@ -68,7 +65,7 @@ if __name__ == '__main__':
         sym_count = len(cnn_preprocessor.syms) - 1
         print('Total symbols: %d' % sym_count)
 
-        with tf.Session() as sess:
+        with tf.compat.v1.Session() as sess:
 
             model = CNN.CNN(sym_count, FLAGS.log_len)
 
@@ -77,7 +74,7 @@ if __name__ == '__main__':
                 model.saver.restore(sess, tf.train.latest_checkpoint(train_dir))
             else:
                 print('== Generating new parameters ==')
-                tf.global_variables_initializer().run()
+                tf.compat.v1.global_variables_initializer().run()
 
             print('== Start training ==')
             for epoch_i in range(FLAGS.epochs):
