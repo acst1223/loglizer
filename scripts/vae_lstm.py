@@ -9,8 +9,11 @@ sys.path.append('../')
 sys.path.append('/root/')  # for docker
 from loglizer import preprocessing, dataloader, config
 from loglizer.models.vae_lstm2 import VAELSTM
-from workflow.BGL_workflow.data_generator import load_BGL
+from loglizer.data_generator import load_BGL
 from collector.collector import Collector
+from tensorflow.python.framework.ops import disable_eager_execution
+
+disable_eager_execution()
 
 flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 60, 'epochs to train')
@@ -25,6 +28,7 @@ flags.DEFINE_string('result_folder', 'result', 'folder to save results')
 flags.DEFINE_float('max_mismatch_rate', 0, 'max rate of mismatch tolerated')
 flags.DEFINE_integer('no_repeat_series', 0, 'whether series will not be repeated: 1: no repeat; 0: repeat')
 flags.DEFINE_integer('checkpoint_frequency', 3, 'every ? epochs to save checkpoints')
+flags.DEFINE_string('dataset', 'HDFS', 'name of the dataset')
 FLAGS = flags.FLAGS
 
 
@@ -47,10 +51,10 @@ def gen_batch(batch_size, i, is_train=False):
 
         c = len(i) // batch_size
         for k in range(0, c * batch_size, batch_size):
-            yield i[k: k + batch_size], i[k: k + batch_size]
+            yield i[k: k + batch_size], i[k: k + batch_size, -1]
 
         if not is_train:
-            yield padding_zero(i[c * batch_size:], batch_size), padding_zero(i[c * batch_size:], batch_size)
+            yield padding_zero(i[c * batch_size:], batch_size), padding_zero(i[c * batch_size:], batch_size)[:, -1]
 
 
 def decide_boundary(ll_n, ll_a):
@@ -143,101 +147,97 @@ class ValCallback(keras.callbacks.Callback):
                 self.best_f1_score = f1_score
 
 
-# datasets = ['BGL', 'HDFS']
-datasets = ['HDFS']
-
-
 if __name__ == '__main__':
-    for dataset in datasets:
-        print('########### Start LSTM on Dataset ' + dataset + ' ###########')
-        config.init('LSTM_' + dataset)
-        checkpoint_name = config.path + FLAGS.checkpoint_name
+    dataset = FLAGS.dataset
+    print('########### Start VAE with LSTM on Dataset ' + dataset + ' ###########')
+    config.init('LSTM_' + dataset)
+    checkpoint_name = config.path + FLAGS.checkpoint_name
 
-        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
-        collector = None
-        if dataset == 'BGL':
-            data_instances = config.BGL_data
+    (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
+    collector = None
+    if dataset == 'BGL':
+        data_instances = config.BGL_data
 
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
 
-        if dataset == 'HDFS':
-            data_instances = config.HDFS_data
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
-                                                                                                  train_ratio=0.35,
-                                                                                                  is_data_instance=True,
-                                                                                                  test_ratio=0.6)
-            result_folder = config.path + FLAGS.result_folder
-            collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
+    if dataset == 'HDFS':
+        data_instances = config.HDFS_data
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
+                                                                                              train_ratio=0.35,
+                                                                                              is_data_instance=True,
+                                                                                              test_ratio=0.6)
+        result_folder = config.path + FLAGS.result_folder
+        collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
 
-        assert FLAGS.h <= FLAGS.plb
-        vae_preprocessor = preprocessing.VAEPreprocessor(x_train, x_test, x_validate)
-        sym_count = len(vae_preprocessor.vectors) - 1
-        print('Total symbols: %d' % sym_count)
-        print(vae_preprocessor.syms)
+    assert FLAGS.h <= FLAGS.plb
+    vae_preprocessor = preprocessing.VAEPreprocessor(x_train, x_test, x_validate)
+    sym_count = len(vae_preprocessor.vectors) - 1
+    print('Total symbols: %d' % sym_count)
+    print(vae_preprocessor.syms)
 
-        # don't pad x_train
-        # x_train = [vae_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
+    # don't pad x_train
+    # x_train = [vae_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
-        # throw away anomalies & same event series in x_train
-        x_temp = x_train
-        x_train = []
-        x_hash = set()
-        for i in range(len(y_train)):
-            if y_train[i] == 0:
-                if FLAGS.no_repeat_series == 1:
-                    for j in range(len(x_temp[i]) - FLAGS.h + 1):
-                        s = x_temp[i][j: j + FLAGS.h]
-                        hs = hash(str(s))
-                        if hs not in x_hash:
-                            x_hash.add(hs)
-                            x_train.append(s)
-                else:
-                    hs = hash(str(x_temp[i]))
-                    if hs not in x_hash:
-                        x_hash.add(hs)
-                        x_train.append(x_temp[i])
+    # throw away anomalies & same event series in x_train
+    x_temp = x_train
+    x_train = []
+    x_hash = set()
+    for i in range(len(y_train)):
+        # if y_train[i] == 0:   # Unsupervised. Do not throw away anomalies.
+        if FLAGS.no_repeat_series == 1:
+            for j in range(len(x_temp[i]) - FLAGS.h + 1):
+                s = x_temp[i][j: j + FLAGS.h]
+                hs = hash(str(s))
+                if hs not in x_hash:
+                    x_hash.add(hs)
+                    x_train.append(s)
+        else:
+            hs = hash(str(x_temp[i]))
+            if hs not in x_hash:
+                x_hash.add(hs)
+                x_train.append(x_temp[i])
 
-        v = VAELSTM(FLAGS.h, sym_count, FLAGS.batch_size, FLAGS.z_dim, FLAGS.alpha)
-        model = v.model
-        nll_model = v.nll_model
+    v = VAELSTM(FLAGS.h, sym_count, FLAGS.batch_size, FLAGS.z_dim, FLAGS.alpha)
+    model = v.model
+    nll_model = v.nll_model
 
-        x_validate = [vae_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_validate]
-        x_validate_count = vae_preprocessor.gen_count_of_sequence(x_validate)
-        x_validate_inputs = vae_preprocessor.gen_inputs(x_validate)
-        val_callback = ValCallback(nll_model, x_validate_inputs, x_validate_count, y_validate)
+    x_validate = [vae_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_validate]
+    x_validate_count = vae_preprocessor.gen_count_of_sequence(x_validate)
+    x_validate_inputs = vae_preprocessor.gen_inputs(x_validate)
+    val_callback = ValCallback(nll_model, x_validate_inputs, x_validate_count, y_validate)
 
-        if os.path.exists(checkpoint_name):
-            print('== Reading model parameters from %s ==' % checkpoint_name)
-            model.load_weights(checkpoint_name)
-
-        if FLAGS.epochs > 0:
-            print('== Start training ==')
-
-            inputs = vae_preprocessor.gen_inputs(x_train)
-            model.fit_generator(gen_batch(FLAGS.batch_size, inputs, is_train=True),
-                                steps_per_epoch=len(inputs) // FLAGS.batch_size,
-                                epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
-
-        if val_callback.best_f1_score == 0.0:
-            val_callback.on_epoch_end(epoch=0)
-
+    if os.path.exists(checkpoint_name):
+        print('== Reading model parameters from %s ==' % checkpoint_name)
         model.load_weights(checkpoint_name)
 
-        x_test = [vae_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_test]
-        x_test_inputs = vae_preprocessor.gen_inputs(x_test)
-        ll_test = -nll_model.predict_generator(gen_batch(FLAGS.batch_size, x_test_inputs),
-                                               steps=math.ceil(len(x_test_inputs) / FLAGS.batch_size))
-        x_test_count = vae_preprocessor.gen_count_of_sequence(x_test)
-        normal_ll, anomaly_ll = get_normal_anomaly_ll(ll_test, y_test, x_test_count)
-        boundary = val_callback.boundary
-        tp, fp = 0, 0
-        for item in normal_ll:
-            if item <= boundary:
-                fp += 1
-        for item in anomaly_ll:
-            if item <= boundary:
-                tp += 1
-        precision = tp / (tp + fp)
-        recall = tp / len(anomaly_ll)
-        f1_score = 2 * precision * recall / (precision + recall)
-        print('Test: Precision: %g, Recall: %g, F1-Score: %g' % (precision, recall, f1_score))
+    if FLAGS.epochs > 0:
+        print('== Start training ==')
+
+        inputs = vae_preprocessor.gen_inputs(x_train)
+        model.fit_generator(gen_batch(FLAGS.batch_size, inputs, is_train=True),
+                            steps_per_epoch=len(inputs) // FLAGS.batch_size,
+                            epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
+
+    if val_callback.best_f1_score == 0.0:
+        val_callback.on_epoch_end(epoch=0)
+
+    model.load_weights(checkpoint_name)
+
+    x_test = [vae_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_test]
+    x_test_inputs = vae_preprocessor.gen_inputs(x_test)
+    ll_test = -nll_model.predict_generator(gen_batch(FLAGS.batch_size, x_test_inputs),
+                                           steps=math.ceil(len(x_test_inputs) / FLAGS.batch_size))
+    x_test_count = vae_preprocessor.gen_count_of_sequence(x_test)
+    normal_ll, anomaly_ll = get_normal_anomaly_ll(ll_test, y_test, x_test_count)
+    boundary = val_callback.boundary
+    tp, fp = 0, 0
+    for item in normal_ll:
+        if item <= boundary:
+            fp += 1
+    for item in anomaly_ll:
+        if item <= boundary:
+            tp += 1
+    precision = tp / (tp + fp)
+    recall = tp / len(anomaly_ll)
+    f1_score = 2 * precision * recall / (precision + recall)
+    print('Test: Precision: %g, Recall: %g, F1-Score: %g' % (precision, recall, f1_score))

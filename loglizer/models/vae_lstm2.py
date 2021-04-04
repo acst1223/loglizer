@@ -1,6 +1,7 @@
 import keras
 from keras import layers, losses
 import keras.backend as K
+import tensorflow as tf
 
 
 class VAELSTM(object):
@@ -16,7 +17,9 @@ class VAELSTM(object):
 
         def sampling(args):
             z_mean, z_log_std = args
-            epsilon = K.random_normal(shape=(batch_size, z_dim))
+            bs = tf.shape(z_mean)[0]
+            dim = tf.shape(z_mean)[1]
+            epsilon = K.random_normal(shape=(bs, dim))
             return z_mean + z_log_std * epsilon
 
         z = layers.Lambda(sampling, output_shape=(z_dim,))([z_mean, z_log_std])
@@ -32,7 +35,9 @@ class VAELSTM(object):
 
         def x_loss(x_true, x_pred):
             # return K.mean(losses.mse(x_true, x_pred), axis=1)
-            return losses.categorical_crossentropy(x_true[:, -1], x_pred)
+            print(x_true.shape)
+            print(x_pred.shape)
+            return losses.categorical_crossentropy(x_true, x_pred)
 
         def kl_loss(x_true, x_pred):
             return -0.5 * K.mean(1 + z_log_std - K.square(z_mean) - K.exp(z_log_std))
@@ -42,8 +47,15 @@ class VAELSTM(object):
 
         self.model = keras.Model(inputs=[inputs], outputs=p_output)
         self.model.compile(loss=vae_loss, optimizer=keras.optimizers.Adam(),
-                           metrics=[x_loss, kl_loss])
+                           metrics=[x_loss, kl_loss], experimental_run_tf_function=False)
         self.model.summary()
 
         self.nll_model = keras.Model(inputs=[inputs], outputs=nll)
 
+
+if __name__ == '__main__':
+    from tensorflow.python.framework.ops import disable_eager_execution
+    disable_eager_execution()
+    vl = VAELSTM(9, 29, 128, 20, 64)
+    a = K.random_normal((128, 9, 29))
+    print(vl.model.evaluate(a, a[:, -1], steps=1))

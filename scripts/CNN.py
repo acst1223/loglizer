@@ -1,13 +1,14 @@
 import numpy as np
 import tensorflow as tf
 import sys
+import tqdm
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
-from loglizer import preprocessing, dataloader
+from loglizer import preprocessing, dataloader, config
+from loglizer.data_generator import load_BGL
 from loglizer.models import CNN
 import random
-import config
 
 flags = tf.compat.v1.app.flags
 flags.DEFINE_integer('epochs', 10, 'epochs to train')
@@ -15,6 +16,7 @@ flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
 flags.DEFINE_integer('log_len', 50, 'default length of log')  # if length < log_len, it will be padded by 0
 flags.DEFINE_string('train_dir', 'train', 'training directory')
 flags.DEFINE_integer('inference_version', -1, 'version for inference')  # use latest if == -1
+flags.DEFINE_string('dataset', 'HDFS', 'name of the dataset')
 FLAGS = flags.FLAGS
 
 
@@ -45,70 +47,72 @@ def apply_model(cnn_preprocessor, x, y, mode='inference'):
     config.log('F-measure: %g' % (2 * precision * recall / (precision + recall)))
 
 
-datasets = ['HDFS']
-
 if __name__ == '__main__':
-    for dataset in datasets:
-        print('########### Start CNN on Dataset ' + dataset + ' ###########')
-        config.init('CNN_' + dataset)
-        train_dir = config.path + FLAGS.train_dir
+    dataset = FLAGS.dataset
+    print('########### Start CNN on Dataset ' + dataset + ' ###########')
+    config.init('CNN_' + dataset)
+    train_dir = config.path + FLAGS.train_dir
 
-        if dataset == 'HDFS':
-            data_instances = config.HDFS_data
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
-                                                                                                  train_ratio=0.3,
-                                                                                                  is_data_instance=True,
-                                                                                                  test_ratio=0.6,
-                                                                                                  CNN_option=True)
+    if dataset == 'HDFS':
+        data_instances = config.HDFS_data
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
+                                                                                              train_ratio=0.3,
+                                                                                              is_data_instance=True,
+                                                                                              test_ratio=0.6,
+                                                                                              CNN_option=True)
+    elif dataset == 'BGL':
+        data_instances = config.BGL_data
 
-        cnn_preprocessor = preprocessing.CNNPreprocessor(FLAGS.log_len, x_train, x_test, x_validate)
-        sym_count = len(cnn_preprocessor.syms) - 1
-        print('Total symbols: %d' % sym_count)
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
 
-        with tf.compat.v1.Session() as sess:
+    cnn_preprocessor = preprocessing.CNNPreprocessor(FLAGS.log_len, x_train, x_test, x_validate)
+    sym_count = len(cnn_preprocessor.syms) - 1
+    print('Total symbols: %d' % sym_count)
 
-            model = CNN.CNN(sym_count, FLAGS.log_len)
+    with tf.compat.v1.Session() as sess:
 
-            if tf.train.get_checkpoint_state(train_dir):
-                print('== Reading model parameters from %s ==' % train_dir)
-                model.saver.restore(sess, tf.train.latest_checkpoint(train_dir))
-            else:
-                print('== Generating new parameters ==')
-                tf.compat.v1.global_variables_initializer().run()
+        model = CNN.CNN(sym_count, FLAGS.log_len)
 
-            print('== Start training ==')
-            for epoch_i in range(FLAGS.epochs):
-                epoch = FLAGS.epoch_base + epoch_i
+        if tf.train.get_checkpoint_state(train_dir):
+            print('== Reading model parameters from %s ==' % train_dir)
+            model.saver.restore(sess, tf.train.latest_checkpoint(train_dir))
+        else:
+            print('== Generating new parameters ==')
+            tf.compat.v1.global_variables_initializer().run()
 
-                print('== Epoch %d ==' % epoch)
-                config.log('== Epoch %d ==' % epoch)
+        print('== Start training ==')
+        for epoch_i in range(FLAGS.epochs):
+            epoch = FLAGS.epoch_base + epoch_i
 
-                # shuffle
-                randnum = random.randint(0, 10000)
-                random.seed(randnum)
-                random.shuffle(x_train)
-                random.seed(random)
-                random.shuffle(y_train)
-                y = cnn_preprocessor.gen_label(y_train)
-                np.set_printoptions(threshold=np.inf)
+            print('== Epoch %d ==' % epoch)
+            config.log('== Epoch %d ==' % epoch)
 
-                inputs = cnn_preprocessor.gen_input(x_train)
-                avg_loss = 0
-                for k in range(np.shape(inputs)[0]):
-                    loss, _ = model.train(sess,
-                                          inputs[k: k + 1],
-                                          y[k: k + 1])
-                    avg_loss += loss
+            # shuffle
+            randnum = random.randint(0, 10000)
+            random.seed(randnum)
+            random.shuffle(x_train)
+            random.seed(random)
+            random.shuffle(y_train)
+            y = cnn_preprocessor.gen_label(y_train)
+            np.set_printoptions(threshold=np.inf)
 
-                avg_loss /= np.shape(x_train)[0]
-                print('avg loss: %g' % avg_loss)
-                config.log('avg loss: %g' % avg_loss)
+            inputs = cnn_preprocessor.gen_input(x_train)
+            avg_loss = 0
+            for k in tqdm.trange(np.shape(inputs)[0]):
+                loss, _ = model.train(sess,
+                                      inputs[k: k + 1],
+                                      y[k: k + 1])
+                avg_loss += loss
 
-                model.saver.save(sess, '%s/checkpoint' % train_dir, global_step=epoch)
+            avg_loss /= np.shape(x_train)[0]
+            print('avg loss: %g' % avg_loss)
+            config.log('avg loss: %g' % avg_loss)
 
-                apply_model(cnn_preprocessor, x_validate, y_validate, 'validating')
+            model.saver.save(sess, '%s/checkpoint' % train_dir, global_step=epoch)
 
-            if FLAGS.inference_version != -1:
-                model.saver.restore(sess, train_dir + '/' + 'checkpoint-%08d' % FLAGS.inference_version)
+            apply_model(cnn_preprocessor, x_validate, y_validate, 'validating')
 
-            apply_model(cnn_preprocessor, x_test, y_test, 'inference')
+        if FLAGS.inference_version != -1:
+            model.saver.restore(sess, train_dir + '/' + 'checkpoint-%08d' % FLAGS.inference_version)
+
+        apply_model(cnn_preprocessor, x_test, y_test, 'inference')

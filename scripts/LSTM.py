@@ -1,43 +1,59 @@
 import numpy as np
+import keras
 import tensorflow as tf
+import os
 import sys
 
 sys.path.append('../')
 sys.path.append('/root/')  # for docker
 from loglizer import preprocessing, dataloader, config
-from loglizer.models import LSTM
-from workflow.BGL_workflow.data_generator import load_BGL
-
-import random
+from loglizer.models import lstm_keras
+from loglizer.data_generator import load_BGL
+from collector.collector import Collector
 
 flags = tf.compat.v1.app.flags
-flags.DEFINE_integer('epochs', 15, 'epochs to train')
-flags.DEFINE_integer('epoch_base', 0, 'base of epoch')
+flags.DEFINE_integer('epochs', 50, 'epochs to train')
 flags.DEFINE_integer('batch_size', 128, 'batch size')
 flags.DEFINE_integer('g', 5, 'the cutoff in the prediction output to be considered normal')
 flags.DEFINE_integer('h', 10, 'window size')
 flags.DEFINE_integer('L', 2, 'number of layers')
 flags.DEFINE_integer('alpha', 64, 'number of memory units')
-flags.DEFINE_integer('plb', 12,
+flags.DEFINE_integer('plb', 11,
                      'padding lower bound, pad to this amount')  # this should be set to prevent length of block < window size, wipe those block with length < window size if this amount is set to 0
-flags.DEFINE_string('train_dir', 'lstm', 'training directory')
-flags.DEFINE_integer('inference_version', -1, 'version for inference')  # use latest if == -1
+flags.DEFINE_string('checkpoint_name', 'lstm.h5', 'training directory')
+flags.DEFINE_string('result_folder', 'result', 'folder to save results')
+flags.DEFINE_float('max_mismatch_rate', 0, 'max rate of mismatch tolerated')
+flags.DEFINE_integer('no_repeat_series', 1, 'whether series will not be repeated: 1: no repeat; 0: repeat')
+flags.DEFINE_integer('checkpoint_frequency', 5, 'every ? epochs to save checkpoints')
+flags.DEFINE_string('dataset', 'HDFS', 'name of the dataset')
 FLAGS = flags.FLAGS
 
 
-def padding_zero(a):
-    '''
-    pad zero to an array
-    :param a: numpy array, shape: (batch, h, sym_count)
-    :return: shape(batch', h, sym_count), batch' is the smallest number that could by divided by batch_size and >= batch
-    '''
-    amount = 0 if a.shape[0] % FLAGS.batch_size == 0 else FLAGS.batch_size - a.shape[0] % FLAGS.batch_size
-    if amount == 0:
-        return a
-    return np.concatenate((a, np.zeros(shape=(amount,) + a.shape[1:]))), amount
+def get_batch_count(a, batch_size):
+    return (len(a) - 1) // batch_size + 1
+
+
+def gen_batch(batch_size, i, l=None, shuffle=False):
+    while True:
+        if shuffle:
+            randnum = np.random.randint(0, 10000)
+            np.random.seed(randnum)
+            np.random.shuffle(i)
+            if l is not None:
+                np.random.seed(randnum)
+                np.random.shuffle(l)
+
+        c = get_batch_count(i, batch_size)
+        for k in range(0, c * batch_size, batch_size):
+            u = len(i) if k + batch_size > len(i) else k + batch_size
+            if l is not None:
+                yield i[k: u], l[k: u]
+            else:
+                yield i[k: u]
 
 
 def compare(output, target):
+    mismatch = 0
     for i in range(len(target)):
         t = np.sum(output[i] * target[i])
         s = list(output[i])
@@ -48,16 +64,20 @@ def compare(output, target):
                 found = True
                 break
         if not found:
-            return 1  # anomaly
-    return 0  # normal
+            mismatch += 1
+    mismatch_rate = mismatch / len(target)
+    if mismatch_rate > FLAGS.max_mismatch_rate:
+        return 1    # anomaly
+    else:
+        return 0    # normal
 
 
-def apply_model(x, y, mode='inference'):
+def apply_model(x, y, model, mode='inference', collector=None):
     print('== Start %s ==' % mode)
     print('== Generate %s inputs ==' % mode)
+    x_before_pad = x
     x = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x]
     inputs, _ = lstm_preprocessor.gen_input_and_label(x)
-    inputs, _ = padding_zero(inputs)
 
     print('== Generate %s targets ==' % mode)
     target_lens = [len(t) - FLAGS.h for t in x]
@@ -68,128 +88,139 @@ def apply_model(x, y, mode='inference'):
         assert targets[i].shape[0] == target_lens[i]
 
     print('== Start applying model ==')
-    results = []
-    for k in range(int(np.shape(inputs)[0] / FLAGS.batch_size)):
-        results.append(model.inference(sess, inputs[k * FLAGS.batch_size: (k + 1) * FLAGS.batch_size]))
-
-    results = np.concatenate(tuple(results))
+    results = model.predict_generator(gen_batch(FLAGS.batch_size, inputs),
+                                      steps=get_batch_count(inputs, FLAGS.batch_size),
+                                      verbose=1)
 
     print('== Start calculating precision, recall and F-measure ==')
 
-    tot_positives = 0
-    tot_anomalies = 0
-    precision = 0
-    recall = 0
+    tp, tn, fp, fn = 0, 0, 0, 0
 
     target_pos = 0
     for i in range(len(targets)):
-        if target_lens[i] == 0:
-            continue
         inference = compare(results[target_pos: target_pos + target_lens[i]],
                             targets[i])  # remember that results is an array, while targets is a list of arrays
-        target_pos += target_lens[i]
-        if inference == 1:
-            tot_positives += 1
-            if y[i] == 1:
-                precision += 1
-        if y[i] == 1:
-            tot_anomalies += 1
-            if inference == 1:
-                recall += 1
 
-    precision = 0
-    recall /= tot_anomalies
-    print('Total positives: %g' % tot_positives)
-    print('Total anomalies: %g' % tot_anomalies)
+        target_pos += target_lens[i]
+
+        if inference == 1:
+            if y[i] == 1:
+                tp += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'tp')
+            else:
+                fp += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'fp')
+        else:
+            if y[i] == 1:
+                fn += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'fn')
+            else:
+                tn += 1
+                if collector:
+                    collector.add_instance(x_before_pad[i], 'tn')
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    f1_score = 2 * precision * recall / (precision + recall)
+    print('TP: %g' % tp)
+    print('TN: %g' % tn)
+    print('FP: %g' % fp)
+    print('FN: %g' % fn)
     print('Precision: %g' % precision)
     print('Recall: %g' % recall)
-    print('F-measure: %g' % (2 * precision * recall / (precision + recall)))
-    config.log('Total positives: %g' % tot_positives)
-    config.log('Total anomalies: %g' % tot_anomalies)
-    config.log('Precision: %g' % precision)
-    config.log('Recall: %g' % recall)
-    config.log('F-measure: %g' % (2 * precision * recall / (precision + recall)))
+    print('F-measure: %g' % f1_score)
+
+    if collector:
+        collector.write_collections()
+
+    return f1_score
 
 
-# datasets = ['BGL', 'HDFS']
-datasets = ['HDFS']
+class ValCallback(keras.callbacks.Callback):
+    def __init__(self, x_val, y_val):
+        super().__init__()
+        self.x_val = x_val
+        self.y_val = y_val
+        self.best_f1_score = 0.0
+
+    def on_epoch_end(self, epoch, logs=None):
+        if (epoch + 1) % FLAGS.checkpoint_frequency == 0:
+            f1_score = apply_model(self.x_val, self.y_val, self.model, 'validation')
+            if f1_score > self.best_f1_score:
+                print('Saving model to %s' % checkpoint_name)
+                model.save_weights(checkpoint_name)
+                self.best_f1_score = f1_score
 
 
 if __name__ == '__main__':
-    for dataset in datasets:
-        print('########### Start LSTM on Dataset ' + dataset + ' ###########')
-        config.init('LSTM_' + dataset)
-        train_dir = config.path + FLAGS.train_dir
+    dataset = FLAGS.dataset
+    print('########### Start LSTM on Dataset ' + dataset + ' ###########')
+    config.init('LSTM_' + dataset)
+    checkpoint_name = config.path + FLAGS.checkpoint_name
 
-        if dataset == 'BGL':
-            data_instances = config.BGL_data
+    (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
+    collector = None
+    if dataset == 'BGL':
+        data_instances = config.BGL_data
 
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.3, 0.6)
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
 
-        if dataset == 'HDFS':
-            data_instances = config.HDFS_data
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
-                                                                                                  train_ratio=0.3,
-                                                                                                  is_data_instance=True,
-                                                                                                  test_ratio=0.6)
+    if dataset == 'HDFS':
+        data_instances = config.HDFS_data
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
+                                                                                              train_ratio=0.35,
+                                                                                              is_data_instance=True,
+                                                                                              test_ratio=0.6)
+        result_folder = config.path + FLAGS.result_folder
+        collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
 
-        lstm_preprocessor = preprocessing.LstmPreprocessor(x_train, x_test, x_validate)
-        sym_count = len(lstm_preprocessor.vectors) - 1
-        print('Total symbols: %d' % sym_count)
-        print(lstm_preprocessor.syms)
+    assert FLAGS.h < FLAGS.plb
+    lstm_preprocessor = preprocessing.LSTMPreprocessor(x_train, x_test, x_validate)
+    sym_count = len(lstm_preprocessor.vectors) - 1
+    print('Total symbols: %d' % sym_count)
+    print(lstm_preprocessor.syms)
 
-        # throw away anomalies in x_train
-        x_temp = x_train
-        x_train = []
-        for i in range(len(y_train)):
-            if y_train[i] == 0:
-                x_train.append(x_temp[i])
-        # pad x_train
-        x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
+    # pad x_train
+    x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
-        with tf.compat.v1.Session() as sess:
-
-            model = LSTM.LSTM(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count)
-
-            if tf.train.get_checkpoint_state(train_dir):
-                print('== Reading model parameters from %s ==' % train_dir)
-                model.saver.restore(sess, tf.train.latest_checkpoint(train_dir))
+    # throw away anomalies & same event series in x_train
+    x_temp = x_train
+    x_train = []
+    x_hash = set()
+    for i in range(len(y_train)):
+        if y_train[i] == 0:
+            if FLAGS.no_repeat_series == 1:
+                for j in range(len(x_temp[i]) - FLAGS.h):
+                    s = x_temp[i][j: j + FLAGS.h + 1]
+                    hs = hash(str(s))
+                    if hs not in x_hash:
+                        x_hash.add(hs)
+                        x_train.append(s)
             else:
-                print('== Generating new parameters ==')
-                tf.compat.v1.global_variables_initializer().run()
+                hs = hash(str(x_temp[i]))
+                if hs not in x_hash:
+                    x_hash.add(hs)
+                    x_train.append(x_temp[i])
 
-            if FLAGS.epochs > 0:
-                print('== Start training ==')
+    model = lstm_keras.LSTM(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count).model
+    # checkpoint = keras.callbacks.ModelCheckpoint(checkpoint_name,
+    #                                              verbose=1, save_weights_only=True)
+    val_callback = ValCallback(x_validate, y_validate)
 
-            for epoch_i in range(FLAGS.epochs):
-                epoch = FLAGS.epoch_base + epoch_i
+    if os.path.exists(checkpoint_name):
+        print('== Reading model parameters from %s ==' % checkpoint_name)
+        model.load_weights(checkpoint_name)
 
-                config.log('== Epoch %d ==' % epoch)
+    if FLAGS.epochs > 0:
+        print('== Start training ==')
 
-                # shuffle
-                randnum = random.randint(0, 10000)
-                random.seed(randnum)
-                random.shuffle(x_train)
-                random.seed(random)
-                random.shuffle(y_train)
+        inputs, labels = lstm_preprocessor.gen_input_and_label(x_train)
+        model.fit_generator(gen_batch(FLAGS.batch_size, inputs, labels, True),
+                            steps_per_epoch=get_batch_count(inputs, FLAGS.batch_size),
+                            epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
 
-                inputs, labels = lstm_preprocessor.gen_input_and_label(x_train)
-                avg_loss = 0
-                for k in range(int(np.shape(inputs)[0] / FLAGS.batch_size)):
-                    loss, _ = model.train(sess,
-                                          inputs[k * FLAGS.batch_size: (k + 1) * FLAGS.batch_size],
-                                          labels[k * FLAGS.batch_size: (k + 1) * FLAGS.batch_size])
-                    avg_loss += loss
-
-                avg_loss /= int(np.shape(x_train)[0] / FLAGS.batch_size)
-                print('avg loss: %g' % avg_loss)
-                config.log('avg loss: %g' % avg_loss)
-
-                model.saver.save(sess, '%s/checkpoint' % train_dir, global_step=epoch)
-
-                apply_model(x_validate, y_validate, 'validating')
-
-            if FLAGS.inference_version != -1:
-                model.saver.restore(sess, train_dir + '/' + 'checkpoint-%08d' % FLAGS.inference_version)
-
-            apply_model(x_test, y_test, 'inference')
+    model.load_weights(checkpoint_name)
+    apply_model(x_test, y_test, model, 'inference', collector)

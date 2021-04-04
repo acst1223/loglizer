@@ -113,7 +113,7 @@ class FeatureExtractor(object):
         return X_new
 
 
-class LstmPreprocessor(object):
+class LSTMPreprocessor(object):
 
     def __init__(self, x_train, x_test=None, x_validate=None):
         '''
@@ -382,7 +382,7 @@ class CNNPreprocessor(object):
 
     def __init__(self, l, x_train, x_test=None, x_validate=None):
         self.l = l
-        tot_sym = []
+        tot_sym = ['_PAD']
         for item in x_train:
             tot_sym += item
         if not x_test is None:
@@ -391,14 +391,18 @@ class CNNPreprocessor(object):
         if not x_validate is None:
             for item in x_validate:
                 tot_sym += item
-        tot_sym.append('_PAD')
         self.syms = set(tot_sym)
+        self.syms = sorted(list(self.syms)) # Important!!
+
+        self.vectors = {}
+        for k, sym in enumerate(self.syms):
+            self.vectors[sym] = k
 
     def pad(self, target):
         return target + ['_PAD'] * (self.l - len(target))
 
     def v_map(self, sym):
-        return 0 if sym == '_PAD' else int(sym[1:])
+        return self.vectors[sym]
 
     def gen_input(self, x):
         x = [self.pad(t)[: 50] for t in x]

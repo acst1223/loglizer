@@ -9,7 +9,7 @@ sys.path.append('../')
 sys.path.append('/root/')  # for docker
 from loglizer import preprocessing, dataloader, config
 from loglizer.models import lstm_attention
-from workflow.BGL_workflow.data_generator import load_BGL
+from loglizer.data_generator import load_BGL
 from collector.collector import Collector
 
 flags = tf.compat.v1.app.flags
@@ -26,6 +26,7 @@ flags.DEFINE_string('result_folder', 'result', 'folder to save results')
 flags.DEFINE_float('max_mismatch_rate', 0, 'max rate of mismatch tolerated')
 flags.DEFINE_integer('no_repeat_series', 1, 'whether series will not be repeated: 1: no repeat; 0: repeat')
 flags.DEFINE_integer('checkpoint_frequency', 10, 'every ? epochs to save checkpoints')
+flags.DEFINE_string('dataset', 'HDFS', 'name of the dataset')
 FLAGS = flags.FLAGS
 
 
@@ -130,61 +131,57 @@ class ValCallback(keras.callbacks.Callback):
                 self.best_f1_score = f1_score
 
 
-# datasets = ['BGL', 'HDFS']
-datasets = ['BGL']
-
-
 if __name__ == '__main__':
-    for dataset in datasets:
-        print('########### Start LSTM on Dataset ' + dataset + ' ###########')
-        config.init('LSTM_' + dataset)
-        checkpoint_name = config.path + FLAGS.checkpoint_name
+    dataset = FLAGS.dataset
+    print('########### Start LSTM Attention on Dataset ' + dataset + ' ###########')
+    config.init('LSTM_' + dataset)
+    checkpoint_name = config.path + FLAGS.checkpoint_name
 
-        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
-        collector = None
-        result_folder = config.path + FLAGS.result_folder
-        if dataset == 'BGL':
-            data_instances = config.BGL_data
+    (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = (None, None), (None, None), (None, None)
+    collector = None
+    result_folder = config.path + FLAGS.result_folder
+    if dataset == 'BGL':
+        data_instances = config.BGL_data
 
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
-            collector = Collector(result_folder, (1, 1, 1, 1), False, config.BGL_col_header, 100)
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = load_BGL(data_instances, 0.35, 0.6)
+        collector = Collector(result_folder, (1, 1, 1, 1), False, config.BGL_col_header, 100)
 
-        if dataset == 'HDFS':
-            data_instances = config.HDFS_data
-            (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
-                                                                                                  train_ratio=0.35,
-                                                                                                  is_data_instance=True,
-                                                                                                  test_ratio=0.6)
-            collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
+    if dataset == 'HDFS':
+        data_instances = config.HDFS_data
+        (x_train, y_train), (x_test, y_test), (x_validate, y_validate) = dataloader.load_HDFS(data_instances,
+                                                                                              train_ratio=0.35,
+                                                                                              is_data_instance=True,
+                                                                                              test_ratio=0.6)
+        collector = Collector(result_folder, (1, 1, 1, 1), False, config.HDFS_col_header, 100)
 
-        assert FLAGS.h < FLAGS.plb
-        lstm_preprocessor = preprocessing.LstmPreprocessor(x_train, x_test, x_validate)
-        sym_count = len(lstm_preprocessor.vectors) - 1
-        print('Total symbols: %d' % sym_count)
-        print(lstm_preprocessor.syms)
+    assert FLAGS.h < FLAGS.plb
+    lstm_preprocessor = preprocessing.LSTMPreprocessor(x_train, x_test, x_validate)
+    sym_count = len(lstm_preprocessor.vectors) - 1
+    print('Total symbols: %d' % sym_count)
+    print(lstm_preprocessor.syms)
 
-        # pad x_train
-        x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
+    # pad x_train
+    x_train = [lstm_preprocessor.pad(t, FLAGS.plb) if len(t) < FLAGS.plb else t for t in x_train]
 
-        # throw away anomalies & same event series in x_train
-        x_train = lstm_preprocessor.process_train_inputs(x_train, y_train, FLAGS.h, True,
-                                                         FLAGS.no_repeat_series)
-        x_train = lstm_preprocessor.transform_to_same_length(x_train, FLAGS.h)
+    # throw away same event series in x_train
+    x_train = lstm_preprocessor.process_train_inputs(x_train, y_train, FLAGS.h, False,
+                                                     FLAGS.no_repeat_series)
+    x_train = lstm_preprocessor.transform_to_same_length(x_train, FLAGS.h)
 
-        model = lstm_attention.LSTMAttention(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count).model
-        # checkpoint = keras.callbacks.ModelCheckpoint(checkpoint_name,
-        #                                              verbose=1, save_weights_only=True)
-        val_callback = ValCallback(x_validate, y_validate)
+    model = lstm_attention.LSTMAttention(FLAGS.g, FLAGS.h, FLAGS.L, FLAGS.alpha, FLAGS.batch_size, sym_count).model
+    # checkpoint = keras.callbacks.ModelCheckpoint(checkpoint_name,
+    #                                              verbose=1, save_weights_only=True)
+    val_callback = ValCallback(x_validate, y_validate)
 
-        if os.path.exists(checkpoint_name):
-            print('== Reading model parameters from %s ==' % checkpoint_name)
-            model.load_weights(checkpoint_name)
-
-        if FLAGS.epochs > 0:
-            print('== Start training ==')
-            model.fit_generator(lstm_preprocessor.gen_batch_fast(FLAGS.batch_size, x_train, True, True),
-                                steps_per_epoch=lstm_preprocessor.get_batch_count(x_train, FLAGS.batch_size),
-                                epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
-
+    if os.path.exists(checkpoint_name):
+        print('== Reading model parameters from %s ==' % checkpoint_name)
         model.load_weights(checkpoint_name)
-        apply_model(x_test, y_test, model, 'inference', collector)
+
+    if FLAGS.epochs > 0:
+        print('== Start training ==')
+        model.fit_generator(lstm_preprocessor.gen_batch_fast(FLAGS.batch_size, x_train, True, True),
+                            steps_per_epoch=lstm_preprocessor.get_batch_count(x_train, FLAGS.batch_size),
+                            epochs=FLAGS.epochs, verbose=1, callbacks=[val_callback])
+
+    model.load_weights(checkpoint_name)
+    apply_model(x_test, y_test, model, 'inference', collector)
