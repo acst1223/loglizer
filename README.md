@@ -4,7 +4,7 @@ A deep learning log anomaly detection tool extended from [logpai/loglizer](https
 
 
 
-### Models
+## Models
 
 This tool contains supervised detection models as well as unsupervised detection models.
 
