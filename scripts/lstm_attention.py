@@ -21,7 +21,7 @@ flags.DEFINE_integer('L', 2, 'number of layers')
 flags.DEFINE_integer('alpha', 64, 'number of memory units')
 flags.DEFINE_integer('plb', 11,
                      'padding lower bound, pad to this amount')  # this should be set to prevent length of block < window size, wipe those block with length < window size if this amount is set to 0
-flags.DEFINE_string('checkpoint_name', 'lstm_attention.h5', 'training directory')
+flags.DEFINE_string('checkpoint_name', 'lstm_attention.h5', 'checkpoint name')
 flags.DEFINE_string('result_folder', 'result', 'folder to save results')
 flags.DEFINE_float('max_mismatch_rate', 0, 'max rate of mismatch tolerated')
 flags.DEFINE_integer('no_repeat_series', 1, 'whether series will not be repeated: 1: no repeat; 0: repeat')

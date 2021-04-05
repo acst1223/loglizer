@@ -23,7 +23,7 @@ flags.DEFINE_integer('h', 10, 'window size')
 flags.DEFINE_integer('alpha', 256, 'number of memory units')
 flags.DEFINE_integer('plb', 10,
                      'padding lower bound, pad to this amount')
-flags.DEFINE_string('checkpoint_name', 'vae_lstm2.h5', 'training directory')
+flags.DEFINE_string('checkpoint_name', 'vae_lstm2.h5', 'checkpoint name')
 flags.DEFINE_string('result_folder', 'result', 'folder to save results')
 flags.DEFINE_float('max_mismatch_rate', 0, 'max rate of mismatch tolerated')
 flags.DEFINE_integer('no_repeat_series', 0, 'whether series will not be repeated: 1: no repeat; 0: repeat')
